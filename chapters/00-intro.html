@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>导读：这本教程是什么 · Next.js 全栈最佳实践教程</title>
+<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar" id="sidebar">
+<p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
+<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<ol>
+<li><a href="../chapters/00-intro.html" class="active">导读：这本教程是什么</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
+<li><a href="../chapters/03-database.html">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
+<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/05-data-access.html">第 5 章 数据访问层：查询、参数化与缓存</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
+<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
+<li><a href="../chapters/11-checkout-transactions.html">第 11 章 结账事务与防超卖</a></li>
+<li><a href="../chapters/12-payments.html">第 12 章 支付：以回调为准</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
+<li><a href="../chapters/14-testing.html">第 14 章 测试策略：先测领域层</a></li>
+<li><a href="../chapters/15-deployment.html">第 15 章 部署：产物、迁移与上线清单</a></li>
+<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+</ol>
+<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+</nav>
+<main>
+<button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
+<h1>导读：这本教程是什么</h1>
+<p>这本教程用<strong>两个完整的 Next.js 电商项目</strong>教你全栈开发的最佳实践。两个项目实现的是同一个东西——一个能下单、能付款、能发货的单商户网店——但技术路线不同。对照着读，你学到的不是某个框架的 API，而是<strong>每个技术决策背后的取舍</strong>。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>项目 A：NextShop</th>
+<th>项目 B：Field Shop</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>源码目录</td>
+<td><code>projects/nextjs-shop/</code></td>
+<td><code>projects/ecommerce-learning/</code></td>
+</tr>
+<tr>
+<td>Next.js</td>
+<td>16（App Router）</td>
+<td>15（App Router）</td>
+</tr>
+<tr>
+<td>数据库访问</td>
+<td>Drizzle ORM</td>
+<td>手写 SQL（<code>pg</code> 驱动）</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>PostgreSQL 17</td>
+<td>PostgreSQL 16</td>
+</tr>
+<tr>
+<td>会话</td>
+<td>JWT（jose 签名，无状态）</td>
+<td>不透明令牌 + 数据库会话表</td>
+</tr>
+<tr>
+<td>密码哈希</td>
+<td>bcryptjs（应用层）</td>
+<td>pgcrypto（数据库层）</td>
+</tr>
+<tr>
+<td>支付</td>
+<td>Stripe Checkout + Webhook（可选），无密钥时模拟支付</td>
+<td>模拟支付（事务内）</td>
+</tr>
+<tr>
+<td>金额单位</td>
+<td>美分（整数）</td>
+<td>日元（整数）</td>
+</tr>
+<tr>
+<td>购物车</td>
+<td>游客购物车 + 登录后合并</td>
+<td>仅登录用户，靠行锁串行化</td>
+</tr>
+<tr>
+<td>测试</td>
+<td>Vitest</td>
+<td>Node 内置 test runner</td>
+</tr>
+<tr>
+<td>特色</td>
+<td>缓存与失效、SEO、游客结账</td>
+<td>领域层、订单状态机、审计日志、outbox、幂等键</td>
+</tr>
+</tbody>
+</table>
+<h2>怎么用这本教程</h2>
+<ol>
+<li><strong>先把两个项目都跑起来</strong>（下一节），用演示账号把购物流程各走一遍：浏览 → 加购 → 结账 → 后台发货 → 退货/取消。</li>
+<li><strong>按章节顺序读</strong>。每章的结构是：要解决的问题 → 看哪段代码 → 代码为什么这样写 → 两套实现的对照 → 常见误区 → 练习。</li>
+<li><strong>练习一定要做</strong>。每章末尾的练习都是在真实代码上动手改，改完跑测试验证。</li>
+</ol>
+<h2>运行项目</h2>
+<p>两个项目都只需要 Docker（含 Docker Compose），在各自目录执行：</p>
+<pre><code class="language-bash">docker compose up --build
+</code></pre>
+<p>首次构建要几分钟（拉镜像、装依赖、建表、灌演示数据）。完成后打开 http://localhost:3000 。</p>
+<p>项目 A 演示账号：</p>
+<table>
+<thead>
+<tr>
+<th>账号</th>
+<th>密码</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>admin@example.com</td>
+<td>admin123</td>
+<td>管理员（可进 /admin）</td>
+</tr>
+<tr>
+<td>demo@example.com</td>
+<td>demo1234</td>
+<td>顾客</td>
+</tr>
+</tbody>
+</table>
+<p>项目 B 演示账号：</p>
+<table>
+<thead>
+<tr>
+<th>账号</th>
+<th>密码</th>
+<th>角色</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>admin@example.test</td>
+<td>Admin1234!</td>
+<td>管理员</td>
+</tr>
+<tr>
+<td>customer@example.test</td>
+<td>Customer1234!</td>
+<td>顾客</td>
+</tr>
+</tbody>
+</table>
+<p>项目 B 的推荐体验路径（来自它自己的 README）：顾客登录 → 用优惠码 <code>LEARN10</code> 下单 → 管理员发货、送达 → 顾客申请退货 → 管理员退款 → 观察库存恢复和审计日志。</p>
+<p>停止：<code>Ctrl+C</code>；连数据一起清掉重来：<code>docker compose down -v</code>（注意：<code>-v</code> 会删掉数据库 volume，不可恢复）。</p>
+<h2>阅读约定</h2>
+<ul>
+<li>代码块上方会标注文件路径，路径以项目根目录为起点，例如 <code>src/features/checkout/actions.ts</code>。</li>
+<li>教程里出现的代码是<strong>节选</strong>，完整代码请对照仓库里的 <code>projects/</code> 目录看。</li>
+<li>「项目 A」指 NextShop（nextjs-shop），「项目 B」指 Field Shop（ecommerce-learning）。</li>
+</ul>
+<h2>本章练习</h2>
+<ol>
+<li>把两个项目都跑起来，分别用顾客账号完成一次下单。</li>
+<li>在项目 B 里用管理员把你刚下的订单发货，再用顾客申请退货、管理员退款，观察订单状态的变化顺序，把顺序写下来——第 13 章会用到。</li>
+<li>找到两个项目的目录结构图（各自 README 里有），说出它们最大的一个结构差异。</li>
+</ol>
+<div class="prevnext"><span class="next"><a href="01-architecture.html">第 1 章 架构总览：模块化单体与分层 →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+</main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</body>
+</html>
