@@ -1,104 +1,73 @@
-# 第 13 章 订单状态机、审计与管理后台
+# 第 13 章 业务流程编排：状态机、审计与事件
 
 ## 本章目标
 
-- 理解为什么订单状态流转要用一张显式的「状态机表」来管，而不是散落的 if
-- 看懂取消/退款时「恢复库存 + 改支付状态 + 写审计」如何在一个事务里完成
-- 理解后台的权限校验与改动后的缓存失效闭环
+- 理解多步骤业务流程为什么要收口到一个 service / workflow 层，多个入口共用
+- 看懂状态变更的守卫应该放在哪一层、审计日志为什么要与业务变更同事务
+- 理解 outbox 模式：如何可靠地把「业务已完成」这个事实通知给外部世界
 
-## 13.1 状态机：一张表管全部流转
+第 11 章解决了「一步操作」的原子性。本章解决「一串操作」的编排：订单要发货、取消要退库存、退款要通知支付商、每一步都要留痕。
 
-项目 B 的订单有六个状态，它的全部合法流转写在一张表里（`src/features/orders/domain/status.ts`）：
+## 13.1 流程收口：一个 workflow，多个入口
+
+「取消订单」这件事可能从三个入口触发：用户在订单页点取消、管理员在后台取消、超时任务自动取消。如果每个入口各写一份「改状态 + 退库存 + 记审计」，三份实现必然漂移。标准做法是收口到一个 service 函数，入口只负责鉴权和参数：
 
 ```ts
-export const transitions: Record<string, readonly string[]> = {
-  paid: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
-  delivered: ['return_requested'],
-  return_requested: ['refunded'],
-  refunded: [],
-  cancelled: [],
-};
-export function canTransition(from: string, to: string) {
-  return transitions[from]?.includes(to) ?? false;
+// 形态示意：订单流程的唯一实现，入口层只调它
+export async function changeOrderStatus(c: Db, actor: Actor, orderId: string, to: string) {
+  // 1) 在事务里锁订单行，读当前状态
+  // 2) canTransition(from, to) 守卫（第 4 章的状态机表）；非法 → 抛错，什么都不改
+  // 3) 动作级权限：顾客只能动自己的、且只能取消；管理员可发货/取消等
+  // 4) 更新状态；若 to === 'cancelled'，在同一事务里逐行归还库存
+  // 5) 写审计日志（同事务）
 }
 ```
 
-读法：`paid` 只能去 `shipped` 或 `cancelled`；`refunded` 和 `cancelled` 是终态（空数组）。这张表就是业务规则本身——客服问「已发货的订单能取消吗」，答案在这张表里，不在某个页面组件的 if 里。它还是纯函数模块（第 1 章的 domain 层），可单测（第 14 章有对应用例：`canTransition('paid','refunded')` 必须为 false——跳过退货流程直接退款是不允许的）。
+页面、后台、任务三个入口调的都是它，规则（能流转、谁能做、连带动作）只有一份。这就是第 1 章说的「跨领域的复杂流程收口」。
 
-项目 A 的状态少（pending/paid/shipped/cancelled），它没有抽状态机表，而是在后台 action 里手写合法对：
+## 13.2 状态守卫在 service 层，不在页面层
 
-```ts
-const ok =
-  (status === "paid" && order?.status === "pending") ||
-  (status === "shipped" && order?.status === "paid");
-```
+后台订单页的按钮会按状态显示/隐藏（pending 显示「发货」，shipped 不显示），但这只是体验。真正的守卫在 service 里：无论请求从哪个入口来、按钮存不存在，`canTransition` 不通过就拒绝执行。
 
-状态少时这样写没问题，但请注意临界点：**当合法流转超过四五条、或多个入口都要改状态时，手写 if 必然漏**。B 有顾客和管理员两个入口、六个状态，所以它必须把规则收成一张表。选型的依据是复杂度，不是喜好。
+把守卫放页面层的后果很具体：新加一个入口（比如移动端）忘了复制判断，非法流转就出现了。**UI 负责不让用户犯错，service 负责让错误犯不成**——两层都要，顺序不能反。
 
-## 13.2 状态变更是一个事务（项目 B）
+## 13.3 审计日志：与业务变更同事务、只追加
 
-B 把所有状态变更收口到一个 workflow（`src/workflows/change-order-status.ts`），页面和 action 只负责把「谁、想把哪张订单、改成什么状态」递进来：
+谁在什么时候把哪张订单从什么状态改成了什么状态——这类问题在出纠纷时必须有答案。审计日志的设计要点：
 
-```ts
-export async function changeOrderStatus(actor: User, id: string, to: string) {
-  await transaction(async (c) => {
-    const o = (await c.query('SELECT * FROM orders WHERE id=$1 FOR UPDATE', [id])).rows[0];
-    if (!o) throw new Error('NOT_FOUND');
-    // 权限：管理员全可；顾客只能对自己的订单做 cancelled / return_requested
-    if (actor.role !== 'admin' && (o.user_id !== actor.id || !['cancelled', 'return_requested'].includes(to)))
-      throw new Error('FORBIDDEN');
-    if (!canTransition(o.status, to)) throw new Error('INVALID_TRANSITION');
+- **与业务变更同事务写入**：状态改了、审计没记上（或反之）的窗口不存在。要么都成，要么都不成。
+- **记结构化字段**：`entity_type`、`entity_id`、`action`、`actor_id`、以及变更前后的关键值（JSONB 存 before/after）。不要只存一句人话日志——将来要按订单、按操作者检索时，结构化字段才查得动。
+- **只追加，不更新不删除**：审计表在应用层只提供 insert 和查询。能改的日志等于没有日志。
+- **与业务代码解耦地查询**：后台提供按实体查审计历史的入口，排查问题时先查这里。
 
-    if (['cancelled', 'refunded'].includes(to)) {
-      // 按 id 顺序锁商品行 → 恢复库存 → 支付状态改 refunded
-    }
-    await c.query('UPDATE orders SET status=$2 WHERE id=$1', [id, to]);
-    await c.query('INSERT INTO audit_logs(actor_id,action,target) VALUES($1,$2,$3)',
-      [actor.id, 'order.' + to, id]);
-    await c.query('INSERT INTO outbox(topic,payload) VALUES($1,$2)',
-      ['order.' + to, JSON.stringify({ orderId: id })]);
-  });
-}
-```
+## 13.4 Outbox：可靠地通知外部世界
 
-一笔状态变更里同时发生四件事，必须同生共死：状态更新、库存恢复（取消/退款时）、支付状态同步、审计与事件记录。任何一步失败，整个事务回滚——不会出现「订单取消了但库存没回来」这种对账噩梦。注意库存恢复前同样 `ORDER BY p.id … FOR UPDATE`（第 11 章的加锁纪律），以及审计写在**同一个事务**里：业务回滚，审计也回滚，日志永远与事实一致。
+订单 paid 之后要发确认邮件、要通知仓储系统——这些外部动作不在你的事务里（第 11 章），直接调又有风险：业务提交成功了，进程在发邮件前崩溃，邮件永远丢了。
 
-权限判断也在这里，不在页面：页面藏按钮是体验，workflow 里的 `FORBIDDEN` 才是规则（第 7 章的第二道门）。
+Outbox 模式的解法是把「要发的消息」当作业务数据的一部分：
 
-项目 A 的对应物是 `cancelOrderAndRestock`（第 12 章）：锁订单行、校验状态集合、改状态、逐项退库存，被三处复用——结账时 Stripe 创建失败的补偿、webhook 的 expired 事件、后台手动取消。**同一个业务动作只有一个实现，三个入口共用**，这就是 service 层存在的意义。
+1. 业务事务里，在改订单状态的**同一个事务**里往 `outbox` 表插一行事件（如 `order.paid`，带 payload）。
+2. 一个独立的投递进程轮询 outbox，把事件发给目标（邮件服务、消息队列、webhook），成功后标记已投递；失败就重试。
+3. 消费方按事件 id 做幂等（又是幂等——跨进程的世界里它无处不在）。
 
-## 13.3 审计日志：谁、做了什么、对谁
+这样「业务已完成」和「事件已登记」同生共死，通知最多延迟，不会丢失。代价是多一张表和一个投递进程，以及最终一致性（通知晚几秒到）。**什么时候值得上**：通知丢了会产生真实损失（发货通知、付款确认）时值得；发个可有可无的提醒时，直接调 + 失败记日志就够了。架构手段永远按损失定价。
 
-B 的 `audit_logs` 表只有四列：`actor_id、action、target、created_at`。后台改价格/库存、订单每次状态变更都写一行，后台有专门的审计页可查。设计要点：
+## 13.5 管理后台：同一套 service，另一套入口
 
-- **只追加，不修改**：审计表没有 UPDATE/DELETE 的代码路径，它是账本不是状态。
-- **和业务同事务**：见上。事后补写的日志在崩溃时会丢，且可能与事实不符。
-- **动作命名结构化**：`order.shipped`、`product.updated` 这种「资源.动作」命名，将来按资源筛选、统计都方便。
+参考实现的后台（`/admin`）没有自己的业务逻辑：商品管理调 catalog 的 action，订单处理调 13.1 的订单 service，权限用第 7 章的 `requireAdmin`。后台的特殊性只在两点：入口不同（管理员界面）、权限不同（管理员角色）。**业务规则不因入口不同而复制**——这是分层架构最直接的回报。
 
-## 13.4 后台的另一半：改完数据要让缓存失效
-
-项目 A 的后台商品 CRUD（`src/features/admin/actions.ts`）每个写操作都以同一组收尾结束：
-
-```ts
-function refreshCatalog() {
-  revalidateTag(CATALOG_TAG, "max");
-  revalidatePath("/admin/products");
-}
-```
-
-前台目录走了缓存（第 5 章），后台改价若不失效，顾客看到的还是旧价——「后台改了没用」是这类系统最常见的 bug 报告。把失效收成一个函数、每个 action 都调，是防漏的办法。还要看到它对**唯一约束冲突**的处理：插入商品时捕获 PostgreSQL 的 `23505` 错误码，翻译成字段错误「slug 已被使用」回显到表单（第 8 章的闭环）——数据库约束（第 3 章）与用户体验在这里接上了。
+后台还提供审计查询页：按订单号查出它的完整变更历史。13.3 埋下的数据，在这里变成运营能力。
 
 ## 常见误区
 
-- **「状态流转写在页面按钮的 disabled 里就行」**：按钮状态是给人看的提示，绕过 UI 直接调 action 时必须有服务端的状态机校验。规则要活在 domain/workflow 层。
-- **「审计日志事后异步补写更不影响性能」**：异步补写在进程崩溃时丢日志，且日志与业务状态可能不一致。先同事务写好，需要时再优化。
-- **「退款就是改个状态」**：退款牵动库存、支付状态、审计三处，少一处都是对账差异。状态变更的副作用清单要在 workflow 里写全。
-- **「管理员权限大，操作不用留痕」**：恰恰相反，权限越大越要留痕——审计的第一读者就是未来的你自己。
+- **「流程简单，页面里顺手写了」**：第二个入口出现的那天就要复制。先收口 service，入口只做鉴权与渲染。
+- **「审计日志事后补也行」**：不同事务的审计一定会出现「改了没记」或「记了没改」的错位，且恰好在出事时查不到。
+- **「发通知直接在 action 里 await 调用」**：外部一慢，用户请求跟着慢；外部一挂，业务跟着失败。通知与业务解耦，outbox 或至少异步队列。
+- **「状态合法性靠前端按钮控制」**：见 13.2。按钮是体验，service 守卫是规则。
 
 ## 本章练习
 
-1. 在项目 B 里走一遍完整链路：顾客下单 → 管理员发货 → 送达 → 顾客申请退货 → 管理员退款。每一步后去数据库看 `orders.status`、`products.stock`、`payments.status`、`audit_logs` 四处的变化。
-2. 试着用顾客身份直接调用 action 把一张 `paid` 订单改成 `refunded`（跳过退货流程），看被哪一层拦下、报什么错。
-3. 给项目 A 的手写状态流转补一张 transitions 表并替换 if 判断，跑一遍后台发货流程验证行为不变。
-4. 思考题：为什么取消订单要恢复库存、而「已发货后退货退款」也要恢复？两者的库存恢复有没有区别（提示：B 的 README 说退款默认商品已检查可重新入库——生产里这一步该多什么环节）？
+1. 给订单加一个新状态流转（如管理员把 paid 订单标记为「退款处理中」）：改状态机表、改 service、改后台按钮，三处各动了什么？体会收口后的改动面。
+2. 在后台打开一张订单的审计历史，逐条对照你实际做过的操作（下单、支付、发货），验证每条都对得上。
+3. 给参考实现加 outbox：订单 paid 时同事务写一行事件，再写一个简单的轮询脚本把事件「投递」到一个本地日志文件，验证业务回滚时事件也不会出现。
+4. 思考题：超时自动取消未支付订单的任务，每分钟跑一次。它与用户手动取消并发命中同一订单时，为什么不会退两次库存？（提示：第 4 章的守卫 + 行锁。）

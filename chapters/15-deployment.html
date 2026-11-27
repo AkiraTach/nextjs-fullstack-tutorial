@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 15 章 部署：产物、迁移与上线清单 · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<title>第 15 章 部署与运维 · Next.js 全栈最佳实践教程</title>
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -13,125 +13,93 @@
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
-<li><a href="../chapters/00-intro.html">导读：这本教程是什么</a></li>
-<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
-<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
-<li><a href="../chapters/03-database.html">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
-<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/00-intro.html">导读：教程定位与参考实现</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 全栈架构总览：分层与依赖方向</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 配置、环境与运行编排</a></li>
+<li><a href="../chapters/03-database.html">第 3 章 数据层设计：建模、约束与迁移</a></li>
+<li><a href="../chapters/04-domain.html">第 4 章 领域层：把业务规则写成纯函数</a></li>
 <li><a href="../chapters/05-data-access.html">第 5 章 数据访问层：查询、参数化与缓存</a></li>
-<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话</a></li>
 <li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
-<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
-<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
-<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
-<li><a href="../chapters/11-checkout-transactions.html">第 11 章 结账事务与防超卖</a></li>
-<li><a href="../chapters/12-payments.html">第 12 章 支付：以回调为准</a></li>
-<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
-<li><a href="../chapters/14-testing.html">第 14 章 测试策略：先测领域层</a></li>
-<li><a href="../chapters/15-deployment.html" class="active">第 15 章 部署：产物、迁移与上线清单</a></li>
-<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与校验</a></li>
+<li><a href="../chapters/09-rendering.html">第 9 章 页面渲染与数据获取</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 客户端状态与服务端状态：购物车</a></li>
+<li><a href="../chapters/11-checkout-transactions.html">第 11 章 事务与并发控制</a></li>
+<li><a href="../chapters/12-payments.html">第 12 章 与外部服务集成：支付与 Webhook</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件</a></li>
+<li><a href="../chapters/14-testing.html">第 14 章 测试策略</a></li>
+<li><a href="../chapters/15-deployment.html" class="active">第 15 章 部署与运维</a></li>
+<li><a href="../chapters/16-checklist.html">第 16 章 全栈架构清单与进阶路线</a></li>
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
-<h1>第 15 章 部署：产物、迁移与上线清单</h1>
+<h1>第 15 章 部署与运维</h1>
 <h2>本章目标</h2>
 <ul>
-<li>看懂项目 A 的多阶段 Dockerfile 与 standalone 产物</li>
-<li>理解「迁移与运行分离」在部署时如何落地（呼应第 2 章）</li>
-<li>拿着两个项目自带的清单，学会给任何项目列「上线前还差什么」</li>
+<li>理解生产镜像的两个决定：多阶段构建、standalone 产物</li>
+<li>复述部署时序：迁移先行、健康检查、密钥注入，以及每一步的理由</li>
+<li>拿到一份可以直接用的上线检查清单，并理解每条背后的坑</li>
 </ul>
-<h2>15.1 多阶段构建：镜像里只留运行时需要的东西</h2>
-<p>项目 A 的 Dockerfile 有四个阶段：</p>
-<pre><code class="language-dockerfile">FROM node:22-slim AS base
-# deps：npm ci 装全部依赖（含 dev，用于构建与迁移）
-FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# builder：构建 Next.js
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-RUN npm run build
-
-# tools：迁移+种子的一次性镜像（第 2 章的 migrate 服务用它）
-FROM base AS tools
-# …只带 drizzle/、scripts/、schema
-CMD [&quot;npm&quot;, &quot;run&quot;, &quot;db:setup&quot;]
-
-# runner：最终运行时镜像
-FROM base AS runner
-ENV NODE_ENV=production PORT=3000 HOSTNAME=0.0.0.0
-RUN groupadd --system --gid 1001 nodejs &amp;&amp; useradd --system --uid 1001 --gid nodejs nextjs
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-USER nextjs
-EXPOSE 3000
-CMD [&quot;node&quot;, &quot;server.js&quot;]
+<h2>15.1 镜像：只装运行需要的东西</h2>
+<p>参考实现的 Dockerfile 是多阶段构建：</p>
+<pre><code>deps 阶段：装全部依赖（含开发依赖）
+build 阶段：next build，产出 standalone
+runner 阶段：只拷贝 standalone 产物 + 静态资源，以非 root 用户运行
+tools 阶段：只含迁移脚本与 schema，用于一次性迁移任务（第 2 章）
 </code></pre>
-<p>要点逐个拆：</p>
 <ul>
-<li><strong>standalone 产物</strong>：<code>next.config.ts</code> 里开了 <code>output: "standalone"</code>，构建会生成一个自带最小依赖的 <code>server.js</code>。runner 阶段只拷它和静态资源，不拷整个 <code>node_modules</code>——镜像小一个数量级，攻击面也小。</li>
-<li><strong>非 root 运行</strong>：建了 <code>nextjs</code> 用户并 <code>USER nextjs</code>。容器逃逸或应用被攻破时，非 root 能显著降低伤害。这是零成本的安全习惯。</li>
-<li><strong>构建期无密钥、无数据库</strong>：builder 阶段不需要任何生产环境变量（第 2 章的 env 设计在这里兑现）；数据库连接发生在运行时。</li>
-<li><strong>tools 阶段单独成镜像</strong>：迁移工具链（含 tsx、drizzle 目录）只在一次性的 migrate 容器里出现，不进运行时镜像。</li>
+<li><strong>standalone 产物</strong>：Next 构建出自带最小依赖的独立目录，运行镜像不需要完整的 <code>node_modules</code>，镜像从 GB 级降到百 MB 级。部署快、攻击面小。</li>
+<li><strong>运行镜像不带源码工具链</strong>：没有编译器、没有开发依赖。出事时攻击者能用的东西越少越好。</li>
+<li><strong>非 root 运行</strong>：容器内进程以普通用户跑，容器逃逸的损失被限制。</li>
+<li><strong>构建不连数据库</strong>：第 2 章守住的那条线在这里兑现——<code>next build</code> 全程不需要数据库与生产密钥，CI 里就能构建出与生产完全相同的镜像。</li>
 </ul>
-<p>对照项目 B 的 Dockerfile：单阶段、<code>npm install</code> 后直接 build、root 运行、<code>npm start</code>。作为教学项目它够用了，但你要能逐条说出它与 A 的差距对应什么风险——这正是本章练习 1。</p>
-<h2>15.2 部署拓扑：谁先谁后</h2>
-<p>A 的 compose 把顺序写死了（第 2 章）：db 健康 → migrate 成功 → web 启动。把它翻译成任何部署平台（Kubernetes、VPS 脚本、PaaS）都成立的原则：</p>
+<h2>15.2 部署时序</h2>
+<p>一次标准部署的顺序（与第 2 章的 compose 编排是同一套逻辑）：</p>
 <ol>
-<li>数据库就绪；</li>
-<li>迁移作为<strong>独立步骤</strong>执行一次，失败就中止发布，旧版本继续服务（注意：迁移要尽量向后兼容，让新旧版本都能在新表结构上跑，这叫 expand-contract，是另一个大话题）；</li>
-<li>新版本才接流量。</li>
+<li>构建镜像并打上版本标签（git commit 短哈希即可），推送到镜像仓库。</li>
+<li>在新版本接流量之前，单独运行迁移任务（tools 镜像）：迁移成功才继续，失败就停在旧版本。</li>
+<li>启动新版本，健康检查（<code>/api/health</code>，第 2 章）通过后才把流量切过去。</li>
+<li>保留上一个版本的镜像与数据库迁移的回退方案：应用回滚 = 切回旧镜像；<strong>数据库迁移尽量写成向后兼容的</strong>（先加列、后删列分两次发布），这样旧版本能跑在新结构上，回滚才真的可行。</li>
 </ol>
-<p>B 的健康检查接口值得单独提（<code>src/app/api/health/route.ts</code>）：</p>
-<pre><code class="language-ts">export const dynamic = 'force-dynamic';
-export async function GET() {
-  try {
-    await db.query('SELECT 1');
-    return Response.json({ status: 'ok' });
-  } catch {
-    return Response.json({ status: 'unavailable' }, { status: 503 });
-  }
-}
-</code></pre>
-<p>健康检查要查「真依赖」而不是只回一个写死的 ok：进程活着但数据库连不上时，返回 503 让负载均衡/编排系统别再往这台送流量。<code>force-dynamic</code> 保证每次都真查、不被缓存。</p>
-<h2>15.3 上线清单：两个项目自己写的作业</h2>
-<p>难得的是，两个项目都在 README 里诚实地列了「这只是学习项目，上线前还需要」。合并去重后是一份很好的通用清单：</p>
-<p><strong>安全与账号</strong>
-- [ ] <code>AUTH_SECRET</code> 换成随机长密钥；演示账号密码全部更换
-- [ ] 全站 HTTPS（并确认 Secure cookie 已开启）
-- [ ] 登录限流 / 防暴力破解（两个项目都缺）
-- [ ] 邮箱验证、找回密码（都缺）
-- [ ] 会话撤销能力（A 的 JWT 方案要注意第 6 章的取舍）</p>
-<p><strong>业务完整性</strong>
-- [ ] 未支付订单的超时清理：A 靠 Stripe 的 expired 事件，模拟支付无超时；B 无预留过期机制
-- [ ] outbox 投递器（B 只记录未投递）、邮件通知
-- [ ] 运费、税费、优惠券的正式报价流程（B 的优惠在提交后才计入最终金额，README 明说了这点不合规）</p>
-<p><strong>工程化</strong>
-- [ ] E2E 测试、监控与告警、备份与恢复演练
-- [ ] 图片上传走对象存储（S3/R2），而不是外链图床
-- [ ] 搜索升级（全文检索）、商品变体（SKU）等业务扩展</p>
-<p>学会这种「诚实清单」的写法本身就是收获：<strong>交付时说清边界，比假装完整更专业</strong>。你以后每做一个项目，都该在 README 里留这样一节。</p>
+<p>迁移与回滚的这条纪律最容易被忽略：一次发布里既删列又改代码，出了问题旧代码连不上新结构，回滚之路当场断掉。</p>
+<h2>15.3 密钥与配置注入</h2>
+<ul>
+<li>密钥（<code>AUTH_SECRET</code>、<code>DATABASE_URL</code>、支付密钥）通过部署平台的环境变量/密钥管理注入，<strong>不写进镜像、不进 git</strong>。镜像是公开可复制的，密钥进镜像等于公开。</li>
+<li>第 2 章的 env 模块在生产环境缺密钥直接拒绝启动——部署后第一件事就是看它有没有正常起来，这正是那条校验的价值时刻。</li>
+<li>不同环境（生产/预发）用同一镜像、不同 env。这保证了「测过的产物」与「上线的产物」是同一个东西。</li>
+</ul>
+<h2>15.4 上线检查清单</h2>
+<p>参考实现 README 的「上线前还需要」一节，加上本教程各章的结论，汇总成这份清单。每条都对应一个真实会翻车的点：</p>
+<ul>
+<li>[ ] <strong>HTTPS 就绪</strong>：cookie 的 <code>Secure</code> 推导依赖它（第 2、6 章）；没有 HTTPS 不要上线登录功能。</li>
+<li>[ ] <strong>密钥全部轮换为生产值</strong>：<code>AUTH_SECRET</code> ≥ 32 字符随机值；不存在任何 dev 默认值。</li>
+<li>[ ] <strong>会话撤销方案明确</strong>：JWT 方案的撤销缺口（第 6 章）已评估：缩短有效期 / token 版本号 / 换数据库会话，三选一或明确接受风险。</li>
+<li>[ ] <strong>支付回调域名可达且验签通过</strong>：用支付商的测试模式实打一笔小额，确认 webhook 落地、金额核对、订单转 paid（第 12 章）。</li>
+<li>[ ] <strong>迁移在预发环境演练过</strong>：包括从旧版本数据升级，而不是只在空库上跑。</li>
+<li>[ ] <strong>数据库备份与恢复演练</strong>：有自动备份，且真的恢复过一次。没恢复过的备份叫希望，不叫备份。</li>
+<li>[ ] <strong>未支付订单的超时关闭任务在跑</strong>：否则库存被 pending 订单长期占用（第 12、13 章）。</li>
+<li>[ ] <strong>日志与告警</strong>：支付失败、webhook 验签失败、迁移失败这三类事件有人能看到。</li>
+<li>[ ] <strong>限流与滥用防护</strong>：登录、下单接口有基本限流（网关或应用层）。教程的参考实现未内置，属于明确的生产加项。</li>
+<li>[ ] <strong>对账任务</strong>：支付商结算单与本地订单的每日比对已排期（第 12 章）。</li>
+</ul>
 <h2>常见误区</h2>
 <ul>
-<li><strong>「能在本地跑就能上线」</strong>：本地跑通验证的是功能；上线还要过安全、密钥、HTTPS、备份、监控这一整套非功能清单。</li>
-<li><strong>「Dockerfile 把源码全拷进去最省事」</strong>：镜像里多余的东西都是攻击面和体积。分阶段构建的麻烦只有一次，收益一直在。</li>
-<li><strong>「健康检查回 200 就行」</strong>：回写死 200 的健康检查只证明进程没死，证明不了服务可用。查一下真依赖，成本一行 SQL。</li>
+<li><strong>「能跑起来 = 能上线」</strong>：能跑只证明了功能。密钥、HTTPS、备份、回滚、告警这些「不出事看不见」的东西，才是上线的定义。</li>
+<li><strong>「迁移和代码一次发布最省事」</strong>：省的是几分钟，赌上的是回滚能力。结构变更与代码变更分开发布。</li>
+<li><strong>「备份开了自动 = 安全」</strong>：没做过恢复演练的备份，恢复时才发现格式/密钥/权限有问题，是运维界最经典的事故剧情。</li>
 </ul>
 <h2>本章练习</h2>
 <ol>
-<li>逐条对照，把项目 B 的 Dockerfile 改成多阶段 + 非 root + standalone，构建并运行验证行为不变。</li>
-<li>给项目 A 写一份你自己的上线清单：通读它的 README 清单后，找出一条它没列但你认为该有的（提示：想想日志里现在有什么、缺什么）。</li>
-<li>思考题：为什么迁移要「向后兼容」？设想 products 表要把 <code>priceCents</code> 改名，新旧两个版本的 web 同时在线（滚动发布中）会发生什么？</li>
+<li>按 15.2 的时序，在本地用 compose 把参考实现从一个「旧版本」升级到「新版本」（自己加一列模拟结构变更），中途故意让迁移失败一次，观察 web 是否保持旧版本可用。</li>
+<li>拿 15.4 的清单逐条对照参考实现，标出每条是「已满足 / 需配置 / 需开发」，需开发的写一句话方案。</li>
+<li>思考题：standalone 产物里为什么还要单独拷贝 <code>public/</code> 与 <code>.next/static/</code>？（提示：standalone 默认不含这两类文件，漏了会怎样？）</li>
 </ol>
-<div class="prevnext"><span><a href="14-testing.html">← 第 14 章 测试策略：先测领域层</a></span><span class="next"><a href="16-comparison-exercises.html">第 16 章 对照总结与进阶路线 →</a></span></div>
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<div class="prevnext"><span><a href="14-testing.html">← 第 14 章 测试策略</a></span><span class="next"><a href="16-checklist.html">第 16 章 全栈架构清单与进阶路线 →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

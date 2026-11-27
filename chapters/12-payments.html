@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 12 章 支付：以回调为准 · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<title>第 12 章 与外部服务集成：支付与 Webhook · Next.js 全栈最佳实践教程</title>
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -13,121 +13,86 @@
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
-<li><a href="../chapters/00-intro.html">导读：这本教程是什么</a></li>
-<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
-<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
-<li><a href="../chapters/03-database.html">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
-<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/00-intro.html">导读：教程定位与参考实现</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 全栈架构总览：分层与依赖方向</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 配置、环境与运行编排</a></li>
+<li><a href="../chapters/03-database.html">第 3 章 数据层设计：建模、约束与迁移</a></li>
+<li><a href="../chapters/04-domain.html">第 4 章 领域层：把业务规则写成纯函数</a></li>
 <li><a href="../chapters/05-data-access.html">第 5 章 数据访问层：查询、参数化与缓存</a></li>
-<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话</a></li>
 <li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
-<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
-<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
-<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
-<li><a href="../chapters/11-checkout-transactions.html">第 11 章 结账事务与防超卖</a></li>
-<li><a href="../chapters/12-payments.html" class="active">第 12 章 支付：以回调为准</a></li>
-<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
-<li><a href="../chapters/14-testing.html">第 14 章 测试策略：先测领域层</a></li>
-<li><a href="../chapters/15-deployment.html">第 15 章 部署：产物、迁移与上线清单</a></li>
-<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与校验</a></li>
+<li><a href="../chapters/09-rendering.html">第 9 章 页面渲染与数据获取</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 客户端状态与服务端状态：购物车</a></li>
+<li><a href="../chapters/11-checkout-transactions.html">第 11 章 事务与并发控制</a></li>
+<li><a href="../chapters/12-payments.html" class="active">第 12 章 与外部服务集成：支付与 Webhook</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件</a></li>
+<li><a href="../chapters/14-testing.html">第 14 章 测试策略</a></li>
+<li><a href="../chapters/15-deployment.html">第 15 章 部署与运维</a></li>
+<li><a href="../chapters/16-checklist.html">第 16 章 全栈架构清单与进阶路线</a></li>
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
-<h1>第 12 章 支付：以回调为准</h1>
+<h1>第 12 章 与外部服务集成：支付与 Webhook</h1>
 <h2>本章目标</h2>
 <ul>
-<li>理解为什么「支付成功」只能以支付商的 webhook 为准，不能信浏览器回跳</li>
-<li>看懂 webhook 的三件套：原始请求体验签、事件分发、处理幂等</li>
-<li>理解 A 的「无密钥自动降级为模拟支付」与 B 的事务内模拟支付各自的边界</li>
+<li>理解与任何外部服务集成的通用模式：以异步回调为准、验签、幂等确认</li>
+<li>看懂为什么「用户说他付了」不算数，回调为什么必须验签且可重入</li>
+<li>理解集成层隔离：外部 SDK 只出现在一个目录里；没有密钥时如何优雅降级</li>
 </ul>
-<h2>12.1 唯一事实来源：webhook</h2>
-<p>项目 A 接的是真实 Stripe。流程是：下单事务先建一张 <code>pending</code>（库存已预留）的订单 → 跳转 Stripe Checkout 付款 → Stripe 服务器向 <code>POST /api/webhooks/stripe</code> 发事件 → webhook 把订单标为已支付。</p>
-<p>注意它<strong>不</strong>靠用户付款后浏览器跳回的 success 页来确认——那个页面只是给人看的。原因：</p>
+<p>支付是「与外部系统对接」的最佳样本：对方不在你的事务里、不听你的回滚、还会重复通知你。本章的每个结论都适用于一切 webhook 类集成（物流、短信、第三方登录、内容审核……）。</p>
+<h2>12.1 集成层隔离：SDK 只住在一个目录</h2>
+<p>参考实现把支付商的全部调用关在 <code>src/server/payments/</code> 里：对外只暴露 <code>createCheckout(order)</code> 和 <code>handleWebhook(req)</code> 两个业务语义的函数，业务代码从不直接碰 SDK。</p>
+<pre><code class="language-ts">// src/server/payments/index.ts
+export function paymentsEnabled(): boolean {
+  return Boolean(process.env.STRIPE_SECRET_KEY);
+}
+</code></pre>
+<p>好处是替换供应商、升级 SDK、写测试替身时，改动面就是这一个目录。<strong>任何外部依赖都要有一层自己的接口收口</strong>——第三方 API 的形状不应该渗进你的业务代码。</p>
+<h2>12.2 事实以回调为准，不以跳转为准</h2>
+<p>用户付款后会从支付页跳回你的站点，但跳转只能用来给用户看个成功页，<strong>不能</strong>用来把订单标记为已支付：用户可能扣款成功却在跳转前关掉页面；跳转参数也能被伪造。真正的事实来源是支付商主动发的 webhook。</p>
+<p>参考实现的订单因此有 <code>pending</code> 态：下单时先建 pending 订单（库存已预留），webhook 到达并确认后才转 <code>paid</code>。用户跳回的成功页只是轮询/展示订单的当前状态而已。</p>
+<h2>12.3 Webhook 的三件必修课</h2>
+<p>webhook 处理函数（<code>src/app/api/webhooks/stripe/route.ts</code> + <code>src/server/payments/webhook.ts</code>）必须做到三点：</p>
+<p><strong>① 验签。</strong> 端点是公开 URL，任何人都能 POST。用对方的签名密钥验证请求确实来自支付商、且未被篡改；验签失败直接 400。注意验签需要<strong>原始请求体</strong>——框架若先把 body 解析成 JSON 再给你，签名就对不上了，这是接 webhook 最常见的第一个坑。</p>
+<p><strong>② 核对金额。</strong> 确认订单前，把回调里的金额与订单应付金额比对。不一致就拒绝确认并记录告警。签名保证「是对方发的」，不保证「这笔钱就是这张订单的钱」——把两个订单的回调张冠李戴，是能真实发生的集成 bug。</p>
+<p><strong>③ 幂等确认。</strong> 支付商会重试 webhook，同一事件可能到两次、三次。确认动作因此写成带状态条件的原子更新：</p>
+<pre><code class="language-sql">-- 形态示意：只有 pending 的订单能被确认成 paid；重复通知更新 0 行，无副作用
+UPDATE orders SET status='paid', payment_intent_id=$2
+WHERE id=$1 AND status='pending'
+</code></pre>
+<p>已 paid 的订单再收到同一通知，更新 0 行，直接返回 200 告诉对方「收到，别再重试」。<strong>webhook 处理函数必须是可重入的</strong>——这和第 11 章的幂等键是同一个思想：外部世界会重复，你的确认动作要经得起重复。</p>
+<h2>12.4 降级：没有密钥时走模拟支付</h2>
+<p><code>paymentsEnabled()</code> 为假时（本地开发、演示环境没配密钥），结账 action 把订单保持在 pending，跳到站内的模拟支付页；用户点「确认支付」后，页面直接调用与 webhook <strong>完全相同的确认函数</strong>：</p>
+<pre><code class="language-ts">/** 与 webhook 共用的确认函数（幂等）：pending → paid。 */
+export async function confirmOrderPaid(orderId: string): Promise&lt;boolean&gt; { /* … */ }
+</code></pre>
+<p>这里的架构要点不是「能演示」，而是<strong>确认逻辑只有一个实现</strong>：真实回调和模拟路径殊途同归，测试模拟路径就等于测试了确认逻辑。降级路径若另写一套，就是两份迟早漂移的实现。</p>
+<h2>12.5 失败与对账</h2>
 <ul>
-<li>用户付完款关掉浏览器、不回跳，订单就永远 pending——但钱其实收到了。</li>
-<li>回跳 URL 是用户可控的，伪造一个「成功回跳」不该让订单变已支付。</li>
-<li>webhook 是支付商服务器对服务器的通知，可验签、可重试，是唯一可信的信号。</li>
+<li>支付会话创建失败：订单留在 pending，用户可从订单页重新发起支付；超时未付的订单由后台任务关闭并归还库存（归还同样要幂等）。</li>
+<li>确认函数内部失败：返回 500 让支付商自动重试——这正是 webhook 可重入设计的原因。</li>
+<li>上线后要有对账意识：每天拿支付商的结算单与本地 paid 订单比对。集成代码再严谨，对账才是最后的网。</li>
 </ul>
-<h2>12.2 webhook 的实现（项目 A）</h2>
-<p><code>src/app/api/webhooks/stripe/route.ts</code>，逐段看：</p>
-<pre><code class="language-ts">export const runtime = &quot;nodejs&quot;;
-
-// 验签必须使用&quot;原始请求体&quot;，不能先 req.json()
-const body = await req.text();
-let event;
-try {
-  event = stripe.webhooks.constructEvent(body, signature, secret);
-} catch {
-  return new Response(&quot;签名校验失败&quot;, { status: 400 });
-}
-</code></pre>
-<p><strong>原始请求体验签</strong>是第一关：Stripe 的签名是对请求体原文算的，任何框架若先把 body 解析成 JSON 再序列化，字节就变了、验签必失败。所以这里用 <code>req.text()</code> 拿原文。这也是 webhook 路由要显式声明 <code>runtime = "nodejs"</code> 的原因之一：需要完整的 Node 环境来处理原始流与签名库。</p>
-<p>第二关是<strong>事件分发与幂等处理</strong>：</p>
-<pre><code class="language-ts">switch (event.type) {
-  case &quot;checkout.session.completed&quot;: {
-    const orderId = event.data.object.metadata?.orderId;
-    if (orderId &amp;&amp; event.data.object.payment_status === &quot;paid&quot;) {
-      await markOrderPaid(orderId); // 幂等
-    }
-    break;
-  }
-  case &quot;checkout.session.expired&quot;: {
-    const orderId = event.data.object.metadata?.orderId;
-    if (orderId &amp;&amp; (await cancelOrderAndRestock(orderId))) {
-      revalidateTag(CATALOG_TAG, &quot;max&quot;);
-    }
-    break;
-  }
-}
-return Response.json({ received: true });
-</code></pre>
-<ul>
-<li>只处理关心的事件，其余一律回 200 表示收到——不回 200，Stripe 会不断重试，把你的日志打爆。</li>
-<li><code>completed</code> 还要再查 <code>payment_status === "paid"</code>：会话完成不等于钱到账（某些支付方式是异步确认的）。</li>
-<li><code>expired</code>（用户一直没付，会话过期）→ 取消订单并<strong>退回预留库存</strong>，同时让目录缓存失效。不处理这个事件，库存会被死订单永久占着。</li>
-</ul>
-<p>幂等在服务层（<code>src/features/orders/service.ts</code>）：</p>
-<pre><code class="language-ts">/** 标记已支付。幂等：只有 pending -&gt; paid 会生效，webhook 重复投递也不会出问题。 */
-export async function markOrderPaid(orderId: string): Promise&lt;boolean&gt; {
-  const updated = await db.update(orders)
-    .set({ status: &quot;paid&quot;, paidAt: new Date() })
-    .where(and(eq(orders.id, orderId), eq(orders.status, &quot;pending&quot;)))
-    .returning({ id: orders.id });
-  return updated.length &gt; 0;
-}
-</code></pre>
-<p>又见第 11 章的条件更新：<code>WHERE status = 'pending'</code> 让重复投递的 webhook 第二次更新 0 行、无副作用。Stripe 官方明确说 webhook 是<strong>至少一次</strong>投递、可能重复可能乱序——处理函数必须按「同一个事件会来 N 次」来写。取消退库存的 <code>cancelOrderAndRestock</code> 同理：先 <code>SELECT … FOR UPDATE</code> 锁订单行、确认状态在允许集合内，才改状态并逐项退库存（第 13 章还会见到它被后台复用）。</p>
-<h2>12.3 模拟支付：两个项目的降级设计</h2>
-<p>本地学习没有 Stripe 密钥怎么办？两家都做了模拟支付，但位置不同：</p>
-<ul>
-<li><strong>A：可切换的降级路径</strong>。<code>getStripe()</code> 没配密钥就返回 <code>null</code>，结账 action 据此把用户送到站内「模拟支付」页，点确认就调同一个 <code>markOrderPaid</code>。守卫很关键：<code>payMockOrder</code> 开头检查 <code>if (stripeConfigured()) throw</code>——<strong>一旦配了真 Stripe，模拟支付自动禁用</strong>，杜绝「生产上有人白嫖模拟支付」的后门。降级路径和正式路径汇入同一个幂等服务函数，行为一致。</li>
-<li><strong>B：事务内模拟</strong>。<code>captureMock</code> 只是一次 INSERT，且被环境开关锁死：</li>
-</ul>
-<pre><code class="language-ts">export async function captureMock(c: PoolClient, orderId: string, amount: number) {
-  if (process.env.DEMO_MODE !== 'true') throw new Error('Mock payment requires DEMO_MODE');
-  await c.query(&quot;INSERT INTO payments(order_id,amount,status) VALUES($1,$2,'captured')&quot;, [orderId, amount]);
-}
-</code></pre>
-<p>B 的架构文档明确写了这只是教学简化：真实支付不能进数据库事务（第 11 章），生产化要改成 A 那种「待支付订单 + 事务外调用 + webhook 确认」的形状。<strong>把两个项目的支付章连起来读，你看到的就是一条从教学实现通往生产实现的路。</strong></p>
 <h2>常见误区</h2>
 <ul>
-<li><strong>「用户跳回 success 页 = 支付成功」</strong>：回跳是体验，webhook 是事实。订单状态只认后者。</li>
-<li><strong>「webhook 处理里先查状态再更新就行」</strong>：查与改之间有并发窗口；用带状态条件的原子更新（或锁行）才幂等。</li>
-<li><strong>「验签失败偶尔出现很正常，忽略即可」</strong>：验签失败要么是配置错（secret 不对、body 被中间层改过），要么是伪造请求。必须 400 拒绝并查原因，不能放行。</li>
-<li><strong>「模拟支付留着没关系，反正没人知道」</strong>：任何「假装成功」的入口在生产都是后门。要么用配置硬禁用（A、B 都做了），要么根本不带上生产构建。</li>
+<li><strong>「用户跳回成功页就是支付成功」</strong>：跳转不可信、不可靠。事实只认服务端回调。</li>
+<li><strong>「webhook 收到一次处理一次，不用管重复」</strong>：所有正经支付商都会重试。不可重入的 webhook 处理迟早重复确认、重复发货。</li>
+<li><strong>「SDK 直接在业务代码里调最省事」</strong>：省下的是当下的一层，欠下的是替换供应商时全仓手术的债。集成层隔离是全栈架构的基本功。</li>
+<li><strong>「验签通过就等于一切正确」</strong>：验签只证明来源。金额、订单号、币种都要逐一核对。</li>
 </ul>
 <h2>本章练习</h2>
 <ol>
-<li>本地用 Stripe CLI 把 webhook 转发到项目 A（README 有步骤），用测试卡 4242… 完成一单，观察订单从 pending 到 paid 的变化时机；再故意把 <code>STRIPE_WEBHOOK_SECRET</code> 改错，看结账与订单状态分别发生什么。</li>
-<li>对同一张订单手动重放两次「模拟支付确认」，验证第二次没有副作用，并指出是哪一行代码保证的。</li>
-<li>思考题：如果 webhook 和用户回跳同时到达，<code>markOrderPaid</code> 和 success 页的渲染会不会打架？为什么？</li>
+<li>本地不配密钥走一遍模拟支付，然后对同一订单再手动调用一次确认函数，验证第二次调用无副作用（状态不变、无重复记录）。</li>
+<li>用 curl 向 webhook 端点发一个假事件（不带合法签名），验证返回 400 且订单状态不变。</li>
+<li>思考题：如果支付商的 webhook 永远没来（对方故障），订单和库存会停在什么状态？你会加什么兜底机制（提示：想想定时任务 + 主动查询支付状态）。</li>
 </ol>
-<div class="prevnext"><span><a href="11-checkout-transactions.html">← 第 11 章 结账事务与防超卖</a></span><span class="next"><a href="13-orders-admin.html">第 13 章 订单状态机、审计与管理后台 →</a></span></div>
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<div class="prevnext"><span><a href="11-checkout-transactions.html">← 第 11 章 事务与并发控制</a></span><span class="next"><a href="13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件 →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 14 章 测试策略：先测领域层 · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<title>第 14 章 测试策略 · Next.js 全栈最佳实践教程</title>
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -13,120 +13,91 @@
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
-<li><a href="../chapters/00-intro.html">导读：这本教程是什么</a></li>
-<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
-<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
-<li><a href="../chapters/03-database.html">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
-<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/00-intro.html">导读：教程定位与参考实现</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 全栈架构总览：分层与依赖方向</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 配置、环境与运行编排</a></li>
+<li><a href="../chapters/03-database.html">第 3 章 数据层设计：建模、约束与迁移</a></li>
+<li><a href="../chapters/04-domain.html">第 4 章 领域层：把业务规则写成纯函数</a></li>
 <li><a href="../chapters/05-data-access.html">第 5 章 数据访问层：查询、参数化与缓存</a></li>
-<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话</a></li>
 <li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
-<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
-<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
-<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
-<li><a href="../chapters/11-checkout-transactions.html">第 11 章 结账事务与防超卖</a></li>
-<li><a href="../chapters/12-payments.html">第 12 章 支付：以回调为准</a></li>
-<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
-<li><a href="../chapters/14-testing.html" class="active">第 14 章 测试策略：先测领域层</a></li>
-<li><a href="../chapters/15-deployment.html">第 15 章 部署：产物、迁移与上线清单</a></li>
-<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与校验</a></li>
+<li><a href="../chapters/09-rendering.html">第 9 章 页面渲染与数据获取</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 客户端状态与服务端状态：购物车</a></li>
+<li><a href="../chapters/11-checkout-transactions.html">第 11 章 事务与并发控制</a></li>
+<li><a href="../chapters/12-payments.html">第 12 章 与外部服务集成：支付与 Webhook</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件</a></li>
+<li><a href="../chapters/14-testing.html" class="active">第 14 章 测试策略</a></li>
+<li><a href="../chapters/15-deployment.html">第 15 章 部署与运维</a></li>
+<li><a href="../chapters/16-checklist.html">第 16 章 全栈架构清单与进阶路线</a></li>
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
-<h1>第 14 章 测试策略：先测领域层</h1>
+<h1>第 14 章 测试策略</h1>
 <h2>本章目标</h2>
 <ul>
-<li>理解两个项目的测试为什么都只测「纯函数」：金额、令牌、定价、状态机</li>
-<li>理解测试选点的经济学：哪些代码最值得先测</li>
-<li>知道这两个项目的测试缺口在哪（集成测试、并发测试、E2E），以及补的顺序</li>
+<li>理解测试投入的分配原则：先测领域层，再测关键流程，页面最后</li>
+<li>看懂参考实现的测试长什么样：纯函数单测 + 关键校验的回归测试</li>
+<li>理解「测试是架构的验收单」：分层做得好，测试自然好写</li>
 </ul>
-<h2>14.1 两个项目的测试清单</h2>
-<p>项目 A（Vitest，<code>tests/unit/</code>）：</p>
-<table>
-<thead>
-<tr>
-<th>文件</th>
-<th>测什么</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>money.test.ts</code></td>
-<td>金额格式化、字符串解析（含 <code>1.005</code>、<code>-5</code>、<code>abc</code> 等非法输入）、行小计求和</td>
-</tr>
-<tr>
-<td><code>token.test.ts</code></td>
-<td>JWT 签发/验签往返、篡改拒绝、换密钥拒绝、空令牌拒绝</td>
-</tr>
-<tr>
-<td><code>schemas.test.ts</code></td>
-<td>Zod 校验规则</td>
-</tr>
-</tbody>
-</table>
-<p>项目 B（Node 内置 test runner，<code>tests/domain.test.ts</code>）测两件事：</p>
-<pre><code class="language-ts">test('coupon and shipping', () =&gt; {
-  assert.deepEqual(totals(2990, 'LEARN10'), { subtotal: 2990, discount: 299, shipping: 500, total: 3191 });
-  assert.equal(totals(5000, '').shipping, 0);
-  assert.throws(() =&gt; totals(-1, ''));
-});
-test('order transitions', () =&gt; {
-  assert.equal(canTransition('paid', 'shipped'), true);
-  assert.equal(canTransition('paid', 'refunded'), false);
-  assert.equal(canTransition('refunded', 'paid'), false);
-  assert.equal(canTransition('return_requested', 'refunded'), true);
-});
-</code></pre>
-<h2>14.2 为什么都是纯函数</h2>
-<p>被测的四个对象有个共同点：<strong>不连数据库、不读环境、不发请求</strong>——给定输入，输出只由输入决定。这类测试：</p>
-<ul>
-<li><strong>快</strong>：毫秒级，保存代码就能跑，不需要先起 Docker 和数据库。</li>
-<li><strong>稳</strong>：不依赖外部状态，没有「昨天能过今天不能过」的 flaky。</li>
-<li><strong>准</strong>：失败时定位就是这个函数，不用排查环境。</li>
-</ul>
-<p>而它们守护的恰恰是<strong>错了最贵</strong>的规则：钱算错、令牌验错、状态流转放错。测试选点的经济学就是这样：先测「纯 + 贵」的部分——领域层天然满足这两条。这不是巧合，是第 1 章分层设计的回报：<strong>domain 层之所以要纯，就是为了能被这样测</strong>。架构与测试是一枚硬币的两面。</p>
-<p>看 A 的 token 测试怎么测「拒绝」类行为：</p>
-<pre><code class="language-ts">it(&quot;rejects tampered or missing tokens&quot;, async () =&gt; {
-  const token = await signSession(payload);
-  expect(await verifySession(token.slice(0, -2) + &quot;xx&quot;)).toBeNull();
-  expect(await verifySession(&quot;garbage&quot;)).toBeNull();
-  expect(await verifySession(undefined)).toBeNull();
-});
-
-it(&quot;rejects a token signed with another secret&quot;, async () =&gt; {
-  const token = await signSession(payload);
-  process.env.AUTH_SECRET = &quot;&lt;different-secret…&gt;&quot;;
-  expect(await verifySession(token)).toBeNull();
-  // …还原
-});
-</code></pre>
-<p>安全功能的测试重点不在「好人能过」，而在「坏人过不了」：篡改、伪造、换密钥、空值，每条拒绝路径都要有用例。写认证代码时把这句话刻在心里：<strong>你的 verify 函数会被怎样攻击，就怎样测它</strong>。</p>
-<h2>14.3 缺口与补测顺序</h2>
-<p>两个项目都诚实地在 README 里写了没测什么。按风险排序，补测的顺序应该是：</p>
+<h2>14.1 先测哪里：按「出错代价 × 变化频率」排序</h2>
+<p>测试资源永远有限，排序依据是出错的代价：</p>
 <ol>
-<li><strong>集成测试（事务与并发）</strong>：第 11 章的防超卖、幂等、回滚，只有真连数据库并发跑才能验。做法：测试里起一个临时数据库（或 compose 的 db），并发发 N 个下单请求抢最后 1 件库存，断言只成 1 单、库存为 0。这类测试慢且重，但它守的是钱。</li>
-<li><strong>权限测试</strong>：第 7 章的越权 404、顾客不能改状态——用不同身份调 action/page 断言结果。</li>
-<li><strong>E2E（Playwright）</strong>：完整走一遍「浏览 → 加购 → 结账 → 支付（模拟）→ 后台发货」，守的是主干流程不回归。数量要克制，E2E 维护成本最高，只覆盖核心链路。</li>
+<li><strong>领域层纯函数</strong>（第 4 章）：金额计算、定价规则、状态流转。出错直接赔钱，且规则经常微调。它们是纯函数，测起来最便宜——给定输入、断言输出，没有数据库、没有网络。</li>
+<li><strong>校验与安全边界</strong>：金额解析的边界输入（<code>"1.005"</code>、<code>"-5"</code>、空串）、登录跳转的 <code>safeNext</code>（<code>//evil.com</code> 必须被拦）、令牌的签发与验签。</li>
+<li><strong>关键写流程的集成测试</strong>：下单事务的并发行为（第 11 章）——需要真数据库，成本高，但这是系统最贵的不变量，值得。</li>
+<li><strong>页面与 UI</strong>：最后。UI 变化最频繁，端到端测试维护成本最高，只覆盖最核心的几条用户路径（浏览 → 加购 → 结账 → 支付成功）。</li>
 </ol>
-<p>注意顺序背后的逻辑：越靠近钱和权限的越先补，越靠近 UI 细节的越后补。反过来先写一堆页面快照测试，是把预算花在最不值钱的地方。</p>
+<p>这个排序背后的原理是第 1 章的分层：规则越纯、越靠内层，测试越快越稳。<strong>一个功能难测，往往不是测试的问题，是它被写错了层</strong>——业务规则揉在页面组件里，当然测不动。</p>
+<h2>14.2 参考实现的测试长什么样</h2>
+<p>参考实现用 Vitest，测试集中在钱、令牌、校验三处，都是毫秒级跑完的纯逻辑测试。以金额解析为例，测试用例本质上是一张「输入 → 期望」表：</p>
+<pre><code class="language-ts">describe(&quot;parseMoneyToCents&quot;, () =&gt; {
+  it(&quot;正常金额&quot;, () =&gt; {
+    expect(parseMoneyToCents(&quot;19.99&quot;)).toBe(1999);
+    expect(parseMoneyToCents(&quot;100&quot;)).toBe(10000);
+  });
+  it(&quot;拒绝三位小数、负数与非数字&quot;, () =&gt; {
+    expect(parseMoneyToCents(&quot;1.005&quot;)).toBeNull();
+    expect(parseMoneyToCents(&quot;-5&quot;)).toBeNull();
+    expect(parseMoneyToCents(&quot;abc&quot;)).toBeNull();
+  });
+});
+</code></pre>
+<p>写这类测试的窍门：<strong>先列边界清单，再逐个变成用例</strong>。边界来自规则本身：零、负数、最大值、格式擦边（多一位小数）、空值、类型擦边（数字型字符串 vs 真数字）。第 4 章 <code>totals()</code> 练习里要求你先写用例表，就是在练这个顺序——先想清规则，再写代码，测试自然成形。</p>
+<p>令牌测试则覆盖安全语义：过期令牌验不过、篡改过的签名验不过、role 不是 <code>"admin"</code> 时被收敛成 customer（第 6 章的白名单）。</p>
+<h2>14.3 集成测试：只测最贵的不变量</h2>
+<p>下单流程的并发测试需要真实 PostgreSQL（可用一个专用的测试库 + 事务回滚隔离）。要断言的不是「接口返回 200」，而是第 11 章的不变量：</p>
+<ul>
+<li>库存为 1、两个并发下单 → 恰好一个成功，库存为 0，无负数；</li>
+<li>同一幂等键提交两次 → 只有一张订单；</li>
+<li>事务中途失败 → 库存、订单、购物车三者都回到下单前。</li>
+</ul>
+<p>这类测试写起来贵、跑起来慢，所以要少而精：只钉住「错了就赔钱」的几条。其余逻辑靠领域层单测兜住。</p>
+<h2>14.4 测试纪律三条</h2>
+<ol>
+<li><strong>测试必须能在 CI 里一条命令跑完</strong>（参考实现是 <code>npm test</code> + <code>npm run typecheck</code>）。跑不起来的测试等于没有。</li>
+<li><strong>改规则先改测试</strong>：定价规则调整时，先更新用例表让测试变红，再改实现变绿。测试是规则的规格说明书，顺序反了它就只是摆设。</li>
+<li><strong>不测框架、不测第三方</strong>：不测 Next 的路由能不能跳转、不测 Stripe 的 SDK 能不能发请求。只测<strong>你的</strong>规则和<strong>你的</strong>编排。</li>
+</ol>
 <h2>常见误区</h2>
 <ul>
-<li><strong>「覆盖率数字高 = 测得好」</strong>：给 getter 和样式组件刷覆盖率毫无意义。看的是关键规则（钱、权、状态、并发）有没有用例。</li>
-<li><strong>「手动点过一遍了，还要什么自动化」</strong>：手动验证的结论只对当次有效；下一次改动有没有破坏它，无人知道。练习里让你手点的场景，恰恰是最该沉淀成自动化用例的场景。</li>
-<li><strong>「测试要 mock 一切外部依赖」</strong>：对领域层成立；对事务层恰恰相反——防超卖的测试如果 mock 掉数据库，测的就是空气。哪层测什么，要用哪层的真实形态测。</li>
+<li><strong>「覆盖率越高越好」</strong>：覆盖率是副产品不是目标。把 getter 和页面布局测到 100%，不如下单不变量多测一条。</li>
+<li><strong>「先写完功能，有空再补测试」</strong>：补测试时规则已成既成事实，测试只能照着实现描红，失去了校验规则的作用。至少领域层要同步写。</li>
+<li><strong>「单元测试要 mock 一切」</strong>：领域层是纯函数，根本不需要 mock。需要大量 mock 才能测的代码，通常是把外部依赖揉进了规则里——回第 1 章看分层。</li>
 </ul>
 <h2>本章练习</h2>
 <ol>
-<li>给项目 A 的 <code>schemas.test.ts</code> 补一条：checkoutSchema 拒绝邮编为空、邮箱大写自动转小写。先写测试，再验证现有实现是否通过。</li>
-<li>给项目 B 的 <code>totals</code> 写一条新用例：小计恰好 5000 时运费为 0（边界值），以及优惠码小写 <code>learn10</code> 也生效（规范化）。</li>
-<li>动手写第 14.3 节说的第一个集成测试（可用任何方式起一个临时 PG）：并发 10 个请求下单库存为 3 的商品，断言成功订单数恰为 3。这是本章最有价值的练习。</li>
+<li>为第 4 章练习里你加的定价规则补全单测：先写用例表（至少覆盖零、负数、满额边界 ±1、与优惠码叠加），再运行验证。</li>
+<li>给 <code>safeNext</code> 写测试：至少覆盖 <code>/account</code>（放行）、<code>//evil.com</code>（拦）、<code>https://evil.com</code>（拦）、空值（回落到 <code>/</code>）。</li>
+<li>写下单并发的集成测试（或伪代码级步骤清单）：库存设为 1，并发两个下单，断言 11.3 的三条不变量。</li>
+<li>思考题：为什么第 5 章的目录缓存函数不在本章的测试清单里？它的正确性靠什么保障？（提示：想想它的失效纪律与「查库兜底」。）</li>
 </ol>
-<div class="prevnext"><span><a href="13-orders-admin.html">← 第 13 章 订单状态机、审计与管理后台</a></span><span class="next"><a href="15-deployment.html">第 15 章 部署：产物、迁移与上线清单 →</a></span></div>
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<div class="prevnext"><span><a href="13-orders-admin.html">← 第 13 章 业务流程编排：状态机、审计与事件</a></span><span class="next"><a href="15-deployment.html">第 15 章 部署与运维 →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

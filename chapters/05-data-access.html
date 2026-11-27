@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>第 5 章 数据访问层：查询、参数化与缓存 · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -13,66 +13,63 @@
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
-<li><a href="../chapters/00-intro.html">导读：这本教程是什么</a></li>
-<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
-<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
-<li><a href="../chapters/03-database.html">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
-<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/00-intro.html">导读：教程定位与参考实现</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 全栈架构总览：分层与依赖方向</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 配置、环境与运行编排</a></li>
+<li><a href="../chapters/03-database.html">第 3 章 数据层设计：建模、约束与迁移</a></li>
+<li><a href="../chapters/04-domain.html">第 4 章 领域层：把业务规则写成纯函数</a></li>
 <li><a href="../chapters/05-data-access.html" class="active">第 5 章 数据访问层：查询、参数化与缓存</a></li>
-<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话</a></li>
 <li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
-<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
-<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
-<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
-<li><a href="../chapters/11-checkout-transactions.html">第 11 章 结账事务与防超卖</a></li>
-<li><a href="../chapters/12-payments.html">第 12 章 支付：以回调为准</a></li>
-<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
-<li><a href="../chapters/14-testing.html">第 14 章 测试策略：先测领域层</a></li>
-<li><a href="../chapters/15-deployment.html">第 15 章 部署：产物、迁移与上线清单</a></li>
-<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与校验</a></li>
+<li><a href="../chapters/09-rendering.html">第 9 章 页面渲染与数据获取</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 客户端状态与服务端状态：购物车</a></li>
+<li><a href="../chapters/11-checkout-transactions.html">第 11 章 事务与并发控制</a></li>
+<li><a href="../chapters/12-payments.html">第 12 章 与外部服务集成：支付与 Webhook</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件</a></li>
+<li><a href="../chapters/14-testing.html">第 14 章 测试策略</a></li>
+<li><a href="../chapters/15-deployment.html">第 15 章 部署与运维</a></li>
+<li><a href="../chapters/16-checklist.html">第 16 章 全栈架构清单与进阶路线</a></li>
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
 <h1>第 5 章 数据访问层：查询、参数化与缓存</h1>
 <h2>本章目标</h2>
 <ul>
-<li>理解 queries / actions 分离后，读路径要解决的三个问题：防注入、只取所需列、缓存</li>
-<li>看懂项目 A 的 <code>unstable_cache</code> + tag 失效策略</li>
-<li>理解项目 B 为什么刻意不用缓存——以及它的代价与前提</li>
+<li>理解读路径要解决的三个问题：防注入、只取所需列、缓存与失效</li>
+<li>看懂 <code>unstable_cache</code> + tag 的失效策略，以及它的纪律要求</li>
+<li>理解缓存的适用边界：只有公开的、与用户无关的数据才能进共享缓存</li>
 </ul>
-<h2>5.1 参数化查询：防注入是默认动作</h2>
-<p>项目 B 全程手写 SQL，但你找不到一处字符串拼接用户输入：</p>
-<pre><code class="language-ts">// src/features/catalog/server/queries.ts（项目 B）
-export async function products(q = '', category = '') {
-  return (await db.query&lt;Product&gt;(
-    &quot;SELECT * FROM products WHERE active AND (name ILIKE '%'||$1||'%' OR description ILIKE '%'||$1||'%') AND ($2='' OR category=$2) ORDER BY name&quot;,
-    [q, category],
-  )).rows;
-}
+<h2>5.1 参数化：防注入是机制，不是过滤</h2>
+<p>无论用 ORM 还是手写 SQL，用户输入永远作为<strong>参数</strong>传给驱动，而不是拼进语句文本。用 Drizzle 时参数化是默认行为：</p>
+<pre><code class="language-ts">// src/features/catalog/queries.ts（节选）
+const [row] = await db.select().from(products)
+  .where(and(eq(products.slug, slug), eq(products.active, true)))
+  .limit(1);
 </code></pre>
-<p>用户输入永远走 <code>$1、$2</code> 占位符，由驱动作为<strong>数据</strong>发送，而不是拼进 SQL 文本当<strong>代码</strong>执行。这是防 SQL 注入的唯一正确姿势：不是「过滤危险字符」，而是从机制上让输入没有机会变成代码。</p>
-<p>项目 A 用 Drizzle，参数化是默认行为，但它还多做了一层——搜索关键词里的 LIKE 通配符转义（<code>src/features/catalog/queries.ts</code>）：</p>
+<p>手写 SQL 时则坚持占位符（<code>WHERE slug = $1</code>），由驱动把输入当数据发送。防注入的正确姿势从来不是「过滤危险字符」，而是让输入在机制上没有机会变成代码。</p>
+<p>还有一层参数化防不了的<strong>语义注入</strong>：LIKE 通配符。参考实现对搜索关键词做了转义：</p>
 <pre><code class="language-ts">if (q) {
   // % 与 _ 是 LIKE 的通配符，用户输入里出现时需要转义
   const pattern = `%${q.replace(/[\\%_]/g, &quot;\\$&amp;&quot;)}%`;
   conditions.push(or(ilike(products.name, pattern), ilike(products.description, pattern))!);
 }
 </code></pre>
-<p>参数化防的是「注入 SQL」，但防不了用户输入 <code>%</code> 把搜索变成全表匹配——这是<strong>语义层</strong>的注入，同样要处理。两层都做，才算完整。</p>
+<p>参数化防「注入 SQL」，转义防「用户输入 % 把搜索变成全表匹配」。两层都做，才算完整。</p>
 <h2>5.2 只取所需列</h2>
-<p>A 的商品列表查询定义了一个 <code>productCard</code> 列集合，只查卡片要显示的六个字段，而不是 <code>SELECT *</code>：</p>
+<p>列表查询定义了明确的列集合，只查界面要显示的字段，而不是 <code>SELECT *</code>：</p>
 <pre><code class="language-ts">const productCard = {
   id: products.id, slug: products.slug, name: products.name,
   priceCents: products.priceCents, stock: products.stock, imageUrl: products.imageUrl,
 };
 </code></pre>
-<p>好处：少传数据、查询意图一目了然、表加了大字段（比如长描述）也不会拖慢列表。B 的教学项目用了 <code>SELECT *</code>——在学习场景下能少写代码看清结构，但你要能说出它的代价。这正是两个项目对照的价值：<strong>一个示范生产习惯，一个示范教学取舍</strong>。</p>
-<h2>5.3 缓存：A 的 tag 失效策略</h2>
-<p>公开商品数据是典型的「读多写少」：成千上万次浏览 vs 偶尔一次后台改价。A 的做法是把目录查询全部包上 <code>unstable_cache</code> 并打同一个 tag：</p>
+<p>好处：少传数据；查询意图一目了然；表里将来加了大字段（长描述、JSON 配置）也不会拖慢列表。查询即接口——列集合就是这份接口的形状。</p>
+<h2>5.3 缓存：难点从来不是存，是失效</h2>
+<p>公开目录数据是典型的「读多写少」：成千上万次浏览 vs 偶尔一次后台改价。参考实现把目录查询全部包上 <code>unstable_cache</code> 并打同一个 tag：</p>
 <pre><code class="language-ts">export const CATALOG_TAG = &quot;catalog&quot;;
 
 export const getFeaturedProducts = unstable_cache(
@@ -83,31 +80,35 @@ export const getFeaturedProducts = unstable_cache(
   { tags: [CATALOG_TAG], revalidate: 60 },
 );
 </code></pre>
-<p>配套的失效动作分布在所有会改动目录数据的地方：</p>
+<p>配套的失效动作必须出现在<strong>每一处</strong>会改动目录数据的地方：</p>
 <ul>
-<li>后台新建/修改商品后：<code>revalidateTag(CATALOG_TAG, "max")</code>（立即失效，不等过期）。</li>
-<li>结账扣库存后：同样失效——库存也是目录数据的一部分，忘了这里，商品页就会显示过期库存。</li>
-<li>Stripe 回调取消订单退库存后：webhook 里也做了同样的失效。</li>
+<li>后台新建/修改商品后：<code>revalidateTag(CATALOG_TAG, "max")</code>（立即失效，不等过期）；</li>
+<li>结账扣库存后：同样失效——库存也是目录数据，漏了这里，商品页会显示过期库存；</li>
+<li>支付回调取消订单退库存后：webhook 里也要失效（第 12 章）。</li>
 </ul>
-<p>这套策略的关键不在 API，而在<strong>纪律：每一处写目录数据的代码，都要记得让缓存失效</strong>。漏一处，bug 就是「后台改了价，前台半天不变」。所以 A 把 tag 常量集中定义在一个文件、所有写路径都从那里 import——用代码结构提醒你别漏。</p>
-<p>注意参数也是缓存键的一部分：<code>listProducts({q, category, sort, page})</code> 的每种参数组合各有一份缓存，搜索词很多时缓存条目会膨胀——<code>revalidate: 60</code> 的短过期就是对这个风险的对冲。</p>
-<h2>5.4 B 为什么不用缓存</h2>
-<p>项目 B 的根布局强制动态渲染，每个请求都实时查库。它的架构文档把理由写明了：<strong>为了便于观察一致性</strong>（下单后立刻能看到库存变化，不被缓存干扰教学），并指出将来引入缓存时的前提：隔离用户数据（购物车、订单绝不能进共享缓存）、设计好失效策略。</p>
-<p>这是一个重要的判断框架：<strong>缓存只适用于「公开的、与用户无关的」数据</strong>。把用户相关数据放进共享缓存，轻则串数据（A 看到 B 的购物车），重则泄漏。A 的缓存函数里只有商品目录，没有任何用户数据——这条边界比缓存 API 本身更重要。</p>
+<p>这套策略的关键不在 API，在<strong>纪律</strong>：写路径漏一处，bug 就是「后台改了价，前台半天不变」。所以 tag 常量集中定义在一个文件、所有写路径都从那里 import——用代码结构提醒你别漏。<code>revalidate: 60</code> 的短过期是兜底（比如缓存键随搜索参数膨胀时的对冲），主动失效才是主力。</p>
+<h2>5.4 缓存的边界：用户数据永不进共享缓存</h2>
+<p>参考实现的缓存函数里只有商品目录，没有任何用户数据。这条边界比缓存 API 本身更重要：</p>
+<ul>
+<li><strong>可以缓存</strong>：公开的、所有人看到都一样的数据（目录、文章、配置）。</li>
+<li><strong>绝不能共享缓存</strong>：与具体用户相关的数据（购物车、订单、个人资料）。放进去轻则串数据（A 看到 B 的购物车），重则泄漏。</li>
+<li><strong>拿不准就别缓存</strong>：实时查库的代价是性能，缓存错了的代价是正确性。先正确，再优化。</li>
+</ul>
+<p>另外注意：<code>listProducts({q, category, sort, page})</code> 的每种参数组合各有一份缓存，参数也是缓存键的一部分——设计缓存时要把键空间的大小一起考虑进去。</p>
 <h2>常见误区</h2>
 <ul>
-<li><strong>「用了 ORM 就不会有注入」</strong>：ORM 的原生 SQL 逃生舱（<code>sql</code> 模板、<code>.execute(raw)</code>）用错了照样注入；LIKE 通配符这类语义注入 ORM 更不管。</li>
-<li><strong>「缓存就是给函数包一层」</strong>：缓存的难点从来不是「存」，是「失效」。写不出完整的失效点清单，就不要上缓存。</li>
-<li><strong>「缓存时间设长点更省资源」</strong>：过期时间是正确性与性能的交换。A 对目录用 60 秒 + 主动失效，而不是图省事设一小时——主动失效在，过期只是兜底。</li>
+<li><strong>「用了 ORM 就不会有注入」</strong>：ORM 的原生 SQL 逃生舱用错了照样注入；LIKE 通配符这类语义注入 ORM 更不管。</li>
+<li><strong>「缓存就是给函数包一层」</strong>：写不出完整的失效点清单，就不要上缓存。先把所有写路径列出来，再决定。</li>
+<li><strong>「缓存时间设长点更省资源」</strong>：过期时间是正确性与性能的交换。主动失效在，过期只是兜底——顺序别反。</li>
 </ul>
 <h2>本章练习</h2>
 <ol>
-<li>在项目 A 里用后台改一个商品的价格，不刷新数据库，观察前台商品页多久内变化；然后把 <code>revalidateTag</code> 那行临时注释掉再改一次，对比差别（改完还原）。</li>
-<li>给项目 B 的商品列表查询加上分页（LIMIT/OFFSET + 总数），注意参数也要走占位符。</li>
-<li>思考题：A 的 <code>listProducts</code> 把搜索词也纳入缓存键。如果有人用一万个不同的搜索词刷接口，会发生什么？现有的哪个设置在缓解这个问题？</li>
+<li>用后台改一个商品的价格，观察前台多久内变化；然后把后台 action 里的 <code>revalidateTag</code> 临时注释掉再改一次，对比差别（改完还原）。</li>
+<li>给商品列表查询加上分页（limit/offset + 总数），注意排序要稳定（追加一个唯一字段做次级排序），否则翻页会重叠/漏行。</li>
+<li>思考题：如果把「我的订单」查询也包上 <code>unstable_cache</code>，会发生什么？从缓存键与用户隔离两个角度回答。</li>
 </ol>
-<div class="prevnext"><span><a href="04-money-pricing.html">← 第 4 章 金额与定价：领域规则要纯</a></span><span class="next"><a href="06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话 →</a></span></div>
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<div class="prevnext"><span><a href="04-domain.html">← 第 4 章 领域层：把业务规则写成纯函数</a></span><span class="next"><a href="06-auth-session.html">第 6 章 认证与会话 →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 3 章 数据库建模：Drizzle vs 手写 SQL · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<title>第 3 章 数据层设计：建模、约束与迁移 · Next.js 全栈最佳实践教程</title>
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -13,38 +13,39 @@
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
-<li><a href="../chapters/00-intro.html">导读：这本教程是什么</a></li>
-<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
-<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
-<li><a href="../chapters/03-database.html" class="active">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
-<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/00-intro.html">导读：教程定位与参考实现</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 全栈架构总览：分层与依赖方向</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 配置、环境与运行编排</a></li>
+<li><a href="../chapters/03-database.html" class="active">第 3 章 数据层设计：建模、约束与迁移</a></li>
+<li><a href="../chapters/04-domain.html">第 4 章 领域层：把业务规则写成纯函数</a></li>
 <li><a href="../chapters/05-data-access.html">第 5 章 数据访问层：查询、参数化与缓存</a></li>
-<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话</a></li>
 <li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
-<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
-<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
-<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
-<li><a href="../chapters/11-checkout-transactions.html">第 11 章 结账事务与防超卖</a></li>
-<li><a href="../chapters/12-payments.html">第 12 章 支付：以回调为准</a></li>
-<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
-<li><a href="../chapters/14-testing.html">第 14 章 测试策略：先测领域层</a></li>
-<li><a href="../chapters/15-deployment.html">第 15 章 部署：产物、迁移与上线清单</a></li>
-<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与校验</a></li>
+<li><a href="../chapters/09-rendering.html">第 9 章 页面渲染与数据获取</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 客户端状态与服务端状态：购物车</a></li>
+<li><a href="../chapters/11-checkout-transactions.html">第 11 章 事务与并发控制</a></li>
+<li><a href="../chapters/12-payments.html">第 12 章 与外部服务集成：支付与 Webhook</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件</a></li>
+<li><a href="../chapters/14-testing.html">第 14 章 测试策略</a></li>
+<li><a href="../chapters/15-deployment.html">第 15 章 部署与运维</a></li>
+<li><a href="../chapters/16-checklist.html">第 16 章 全栈架构清单与进阶路线</a></li>
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
-<h1>第 3 章 数据库建模：Drizzle vs 手写 SQL</h1>
+<h1>第 3 章 数据层设计：建模、约束与迁移</h1>
 <h2>本章目标</h2>
 <ul>
-<li>对照两种建模方式：项目 A 用 Drizzle 在 TypeScript 里定义 schema 并生成迁移；项目 B 直接写 SQL 建表</li>
-<li>理解电商数据建模的几个关键决定：金额用整数、订单项存快照、状态用枚举/CHECK、外键的删除策略</li>
+<li>看懂用 Drizzle 在 TypeScript 里定义 schema 并生成迁移的工作流</li>
+<li>理解数据建模的四个关键决定：金额用整数、快照字段、状态枚举、外键删除策略</li>
+<li>理解为什么约束必须下沉到数据库，而不能只靠应用层校验</li>
 </ul>
-<h2>3.1 同一张 products 表，两种写法</h2>
-<p>项目 A（<code>src/server/db/schema.ts</code>，Drizzle）：</p>
+<h2>3.1 schema 即事实来源</h2>
+<p>参考实现的表结构定义在 <code>src/server/db/schema.ts</code>，以 products 表为例：</p>
 <pre><code class="language-ts">export const products = pgTable(
   &quot;products&quot;,
   {
@@ -64,57 +65,18 @@
   (t) =&gt; [index(&quot;products_category_idx&quot;).on(t.categoryId)],
 );
 </code></pre>
-<p>项目 B（<code>migrations/001-init.sql</code>，手写 SQL）：</p>
-<pre><code class="language-sql">CREATE TABLE products (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  slug text UNIQUE NOT NULL,
-  name text NOT NULL,
-  description text NOT NULL,
-  category text NOT NULL,
-  price integer NOT NULL CHECK(price&gt;=0),
-  stock integer NOT NULL CHECK(stock&gt;=0),
-  active boolean NOT NULL DEFAULT true,
-  icon text NOT NULL DEFAULT '📦'
-);
-</code></pre>
-<p>两者表达的是同一套约束。差别在工作流：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>Drizzle（A）</th>
-<th>手写 SQL（B）</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>事实来源</td>
-<td>TS 代码，<code>drizzle-kit generate</code> 生成迁移 SQL</td>
-<td>SQL 文件本身</td>
-</tr>
-<tr>
-<td>类型</td>
-<td>schema 直接推出 TS 类型（<code>$inferSelect</code>），查询全程类型安全</td>
-<td>查询结果要手写类型，靠自觉对齐</td>
-</tr>
-<tr>
-<td>演进</td>
-<td>有版本号的迁移链，可增量升级已有数据库</td>
-<td>只有初始化脚本，已有数据卷不重跑（第 2 章）</td>
-</tr>
-<tr>
-<td>学习价值</td>
-<td>学会工业界主流做法</td>
-<td>能亲眼看到约束、索引、行锁的 SQL 本体</td>
-</tr>
-</tbody>
-</table>
-<p>选哪个取决于场景：长期维护的项目用 ORM + 迁移；想吃透 SQL 和事务，手写一遍收获更大。<strong>两个项目都不约而同地把约束下沉到数据库</strong>（UNIQUE、CHECK、NOT NULL），这是重点——应用层校验是给用户看的，数据库约束是最后的防线，两者都要有。</p>
-<h2>3.2 金额：永远用整数</h2>
-<p>两个项目都用整数存金额：A 用美分（<code>priceCents</code>），B 用日元整数（日元本身没有辅币，天然整数）。</p>
-<p>原因只有一个：浮点数存钱必出事故。<code>0.1 + 0.2 !== 0.3</code> 在任何语言里都成立，金额一旦用 <code>float/decimal 字符串</code>之外的浮点类型，迟早在对账时差一分钱。整数方案把问题消灭在建模层：第 4 章会看到，所有金额运算都是整数运算，只在<strong>展示</strong>时才格式化。</p>
-<h2>3.3 订单项存快照：历史不能被现在修改</h2>
-<p>两个项目的 <code>order_items</code> 都存了下单当时的<strong>名称和单价</strong>，而不是只存 product_id 再去关联查询：</p>
+<p>工作流是：改这份 TS 定义 → <code>npm run db:generate</code> 生成带版本号的 SQL 迁移 → 迁移在部署时独立执行（第 2 章）。收益有三层：</p>
+<ul>
+<li><strong>类型贯通</strong>：schema 直接推出 TS 类型（<code>typeof products.$inferSelect</code>），查询、表单、页面全程类型安全，改个字段名全仓报错提醒你。</li>
+<li><strong>可演进</strong>：迁移链有顺序、有历史，已有数据库可以增量升级，而不是推倒重来。</li>
+<li><strong>约束可见</strong>：UNIQUE、NOT NULL、默认值、索引都写在定义里，读 schema 就是读数据契约。</li>
+</ul>
+<p>手写 SQL 建表当然也能表达同一套约束（<code>CHECK(price&gt;=0)</code> 这类甚至更直接）。两条路线的差别不在表达能力，在<strong>长期演进与类型安全</strong>：项目一旦要活过几个月，迁移链 + 类型贯通的价值会迅速超过手写 SQL 的直白。</p>
+<h2>3.2 金额：永远用最小单位整数</h2>
+<p>金额用整数存最小货币单位：美元存分（<code>priceCents</code>），日元本身没有辅币就直接存整数日元。</p>
+<p>原因只有一个：浮点数存钱必出事故。<code>0.1 + 0.2 !== 0.3</code> 在任何语言里都成立，金额一旦用浮点，迟早在对账时差一分钱。整数方案把问题消灭在建模层：第 4 章会看到，所有金额运算都是整数运算，只在<strong>展示</strong>时才格式化。</p>
+<h2>3.3 快照：历史数据必须自包含</h2>
+<p>订单项（order_items）存了下单当时的<strong>名称和单价快照</strong>，而不是只存 product_id 再关联查询：</p>
 <pre><code class="language-ts">export const orderItems = pgTable(&quot;order_items&quot;, {
   // …
   productId: uuid(&quot;product_id&quot;).references(() =&gt; products.id, { onDelete: &quot;set null&quot; }),
@@ -124,33 +86,38 @@
   quantity: integer(&quot;quantity&quot;).notNull(),
 });
 </code></pre>
-<p>为什么：商品会改价、改名、甚至下架删除。如果订单只存 product_id，去年 99 元买的东西，今天打开订单详情可能显示成 129 元——账就对不上了。快照让订单成为<strong>自包含的历史事实</strong>。注意外键的 <code>onDelete: "set null"</code>：商品删了，订单项还在，只是 productId 变空——配合快照字段，历史订单依然完整可读。这个删除策略是被快照设计「逼」出来的，读 schema 时要连起来看。</p>
-<h2>3.4 状态：枚举与 CHECK</h2>
+<p>商品会改价、改名、甚至被删除。如果订单只存 product_id，去年 99 元买的东西，今天打开订单详情可能显示成 129 元——账就对不上了。快照让订单成为<strong>自包含的历史事实</strong>。注意外键的 <code>onDelete: "set null"</code> 与快照是配套的：商品删了，订单项还在、名称价格都在，只是 productId 变空。读 schema 时要把这两处连起来看。</p>
+<p>这条原则不限于电商：任何「记录某时某刻的事实」的数据（账单、审批、报价）都要存快照，而不是实时关联「现在的样子」。</p>
+<h2>3.4 状态与约束：非法值在数据库层就存不进去</h2>
+<p>订单状态用 PostgreSQL 枚举类型：</p>
+<pre><code class="language-ts">export const orderStatusEnum = pgEnum(&quot;order_status&quot;, [
+  &quot;pending&quot;,   // 已下单，等待支付（库存已预留）
+  &quot;paid&quot;,      // 已支付
+  &quot;shipped&quot;,   // 已发货
+  &quot;cancelled&quot;, // 已取消（库存已归还）
+]);
+</code></pre>
+<p>枚举的代价是增删值要迁移（<code>ALTER TYPE</code>），换来的是类型层面杜绝非法状态。用 <code>text + CHECK(status IN (...))</code> 也能达到同样效果、更灵活——选哪个不重要，重要的是<strong>非法状态在数据库层就存不进去</strong>。至于「哪些状态之间能互相转换」是业务规则，不归数据库管，那是第 4 章状态机和第 13 章流程编排的事。</p>
+<p>其他约束同样下沉：</p>
 <ul>
-<li>A 用 PostgreSQL 枚举类型：<code>order_status = pending / paid / shipped / cancelled</code>，类型层面杜绝非法值。</li>
-<li>B 用 <code>text + CHECK(status IN (...))</code>，多了 <code>delivered / return_requested / refunded</code>（因为 B 实现了退货流程）。</li>
-</ul>
-<p>枚举的代价是改值要迁移（<code>ALTER TYPE</code>），CHECK 灵活些但约束散在表定义里。没有绝对优劣，关键是<strong>非法状态在数据库层就存不进去</strong>。至于「哪些状态之间能互相转换」是业务规则，不归数据库管——那是第 13 章状态机的事。</p>
-<h2>3.5 其他值得注意的建模决定</h2>
-<ul>
-<li><strong>唯一约束做幂等</strong>：B 的 <code>orders</code> 表有 <code>UNIQUE(user_id, request_key)</code>——同一个用户带着同一个请求键重复提交，数据库只允许一行（第 11 章详解）。A 的 <code>users.email</code>、<code>products.slug</code> 唯一约束同样是防线：注册时先查后插有竞态，最终靠唯一约束兜底（A 的后台建商品就专门捕获了 PG 的 <code>23505</code> 唯一冲突错误码，翻译成「slug 已被使用」的表单错误）。</li>
-<li><strong>索引只建在真查询上</strong>：A 给 <code>orders.user_id</code>、<code>products.category_id</code> 建索引，对应「我的订单」「按分类列表」两个真实查询。索引不是越多越好，每个索引都在给写入加税。</li>
-<li><strong>B 的审计与 outbox 表</strong>：<code>audit_logs</code>（谁对什么做了什么）和 <code>outbox</code>（待投递的领域事件）都是独立表、只追加。这两张表让 B 的后台操作全程留痕——第 13 章细讲。</li>
+<li><strong>唯一约束做幂等与防重</strong>：<code>users.email</code>、<code>products.slug</code> 唯一。注册时「先查后插」在并发下有竞态（两个请求都查到不存在、都插入），最终靠唯一约束兜底。参考实现的后台建商品就专门捕获了 PostgreSQL 的 <code>23505</code> 唯一冲突错误码，翻译成「slug 已被使用」的表单错误给用户看——数据库约束与用户体验在这里接上了（第 8 章）。</li>
+<li><strong>索引只建在真查询上</strong>：<code>orders.user_id</code>（我的订单）、<code>products.category_id</code>（按分类列表）。索引不是越多越好，每个索引都在给写入加税。</li>
+<li><strong>数量与金额的 CHECK</strong>：库存、数量、金额这类字段加上 <code>&gt;= 0</code> 一类检查，让脏数据在写入瞬间就被拒绝，而不是等对账时才发现。</li>
 </ul>
 <h2>常见误区</h2>
 <ul>
-<li><strong>「价格用 decimal(10,2) 也行」</strong>：数据库 decimal 本身没错，错的是把它读进 JS 变成 number（浮点）再运算。整数分/整数日元让全链路只有一种表示，最省心。</li>
-<li><strong>「订单详情页 join 一下 products 就行，要什么快照」</strong>：join 到的是商品的<strong>现在</strong>，订单要的是<strong>当时</strong>。财务数据必须自包含。</li>
-<li><strong>「约束在代码里校验过了，数据库就不用了」</strong>：并发下两个请求可以同时通过代码校验（都查到「不存在」再都插入）。唯一约束是唯一能防住竞态的那道门。</li>
+<li><strong>「价格用 decimal(10,2) 也行」</strong>：数据库 decimal 本身没错，错的是把它读进 JS 变成 number（浮点）再运算。最小单位整数让全链路只有一种表示，最省心。</li>
+<li><strong>「详情页 join 一下主表就行，要什么快照」</strong>：join 到的是数据的<strong>现在</strong>，历史记录要的是<strong>当时</strong>。财务类数据必须自包含。</li>
+<li><strong>「约束在代码里校验过了，数据库就不用了」</strong>：并发下两个请求可以同时通过代码校验。唯一约束是唯一能防住竞态的那道门。应用校验是给用户看的，数据库约束是最后的防线，两者都要有。</li>
 </ul>
 <h2>本章练习</h2>
 <ol>
-<li>在项目 A 里给 <code>products</code> 加一个 <code>brand</code> 字段：改 schema → <code>npm run db:generate</code> → 打开生成的迁移 SQL 看它长什么样 → <code>npm run db:setup</code>。</li>
-<li>在项目 B 里试着直接用 psql 插入一个 <code>price = -100</code> 的商品和一个 <code>status = 'flying'</code> 的订单，看数据库怎么拒绝你。</li>
-<li>思考题：A 的 <code>carts</code> 表用独立的 cart 记录 + cookie 里的 cart id，B 直接把 <code>user_id</code> 放进 <code>cart_items</code>。两种建模各自的前提是什么（提示：游客能不能加购）？</li>
+<li>给 <code>products</code> 加一个 <code>brand</code> 字段：改 schema → <code>npm run db:generate</code> → 打开生成的迁移 SQL 看它长什么样 → 执行迁移。</li>
+<li>用 psql 直接往数据库里插一个负数库存的商品、一个状态为 <code>flying</code> 的订单，看数据库怎么拒绝你，并指出各自是哪条约束在起作用。</li>
+<li>思考题：<code>carts</code> 表把游客购物车（userId 为空）和用户购物车放在同一张表，靠 cookie 里的 cart id 认领游客车。这个建模的前提是什么？如果业务改成「必须登录才能加购」，表结构可以怎么简化？</li>
 </ol>
-<div class="prevnext"><span><a href="02-env-docker.html">← 第 2 章 环境配置与 Docker 编排</a></span><span class="next"><a href="04-money-pricing.html">第 4 章 金额与定价：领域规则要纯 →</a></span></div>
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<div class="prevnext"><span><a href="02-env-docker.html">← 第 2 章 配置、环境与运行编排</a></span><span class="next"><a href="04-domain.html">第 4 章 领域层：把业务规则写成纯函数 →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

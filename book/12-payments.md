@@ -1,106 +1,76 @@
-# 第 12 章 支付：以回调为准
+# 第 12 章 与外部服务集成：支付与 Webhook
 
 ## 本章目标
 
-- 理解为什么「支付成功」只能以支付商的 webhook 为准，不能信浏览器回跳
-- 看懂 webhook 的三件套：原始请求体验签、事件分发、处理幂等
-- 理解 A 的「无密钥自动降级为模拟支付」与 B 的事务内模拟支付各自的边界
+- 理解与任何外部服务集成的通用模式：以异步回调为准、验签、幂等确认
+- 看懂为什么「用户说他付了」不算数，回调为什么必须验签且可重入
+- 理解集成层隔离：外部 SDK 只出现在一个目录里；没有密钥时如何优雅降级
 
-## 12.1 唯一事实来源：webhook
+支付是「与外部系统对接」的最佳样本：对方不在你的事务里、不听你的回滚、还会重复通知你。本章的每个结论都适用于一切 webhook 类集成（物流、短信、第三方登录、内容审核……）。
 
-项目 A 接的是真实 Stripe。流程是：下单事务先建一张 `pending`（库存已预留）的订单 → 跳转 Stripe Checkout 付款 → Stripe 服务器向 `POST /api/webhooks/stripe` 发事件 → webhook 把订单标为已支付。
+## 12.1 集成层隔离：SDK 只住在一个目录
 
-注意它**不**靠用户付款后浏览器跳回的 success 页来确认——那个页面只是给人看的。原因：
-
-- 用户付完款关掉浏览器、不回跳，订单就永远 pending——但钱其实收到了。
-- 回跳 URL 是用户可控的，伪造一个「成功回跳」不该让订单变已支付。
-- webhook 是支付商服务器对服务器的通知，可验签、可重试，是唯一可信的信号。
-
-## 12.2 webhook 的实现（项目 A）
-
-`src/app/api/webhooks/stripe/route.ts`，逐段看：
+参考实现把支付商的全部调用关在 `src/server/payments/` 里：对外只暴露 `createCheckout(order)` 和 `handleWebhook(req)` 两个业务语义的函数，业务代码从不直接碰 SDK。
 
 ```ts
-export const runtime = "nodejs";
-
-// 验签必须使用"原始请求体"，不能先 req.json()
-const body = await req.text();
-let event;
-try {
-  event = stripe.webhooks.constructEvent(body, signature, secret);
-} catch {
-  return new Response("签名校验失败", { status: 400 });
+// src/server/payments/index.ts
+export function paymentsEnabled(): boolean {
+  return Boolean(process.env.STRIPE_SECRET_KEY);
 }
 ```
 
-**原始请求体验签**是第一关：Stripe 的签名是对请求体原文算的，任何框架若先把 body 解析成 JSON 再序列化，字节就变了、验签必失败。所以这里用 `req.text()` 拿原文。这也是 webhook 路由要显式声明 `runtime = "nodejs"` 的原因之一：需要完整的 Node 环境来处理原始流与签名库。
+好处是替换供应商、升级 SDK、写测试替身时，改动面就是这一个目录。**任何外部依赖都要有一层自己的接口收口**——第三方 API 的形状不应该渗进你的业务代码。
 
-第二关是**事件分发与幂等处理**：
+## 12.2 事实以回调为准，不以跳转为准
 
-```ts
-switch (event.type) {
-  case "checkout.session.completed": {
-    const orderId = event.data.object.metadata?.orderId;
-    if (orderId && event.data.object.payment_status === "paid") {
-      await markOrderPaid(orderId); // 幂等
-    }
-    break;
-  }
-  case "checkout.session.expired": {
-    const orderId = event.data.object.metadata?.orderId;
-    if (orderId && (await cancelOrderAndRestock(orderId))) {
-      revalidateTag(CATALOG_TAG, "max");
-    }
-    break;
-  }
-}
-return Response.json({ received: true });
+用户付款后会从支付页跳回你的站点，但跳转只能用来给用户看个成功页，**不能**用来把订单标记为已支付：用户可能扣款成功却在跳转前关掉页面；跳转参数也能被伪造。真正的事实来源是支付商主动发的 webhook。
+
+参考实现的订单因此有 `pending` 态：下单时先建 pending 订单（库存已预留），webhook 到达并确认后才转 `paid`。用户跳回的成功页只是轮询/展示订单的当前状态而已。
+
+## 12.3 Webhook 的三件必修课
+
+webhook 处理函数（`src/app/api/webhooks/stripe/route.ts` + `src/server/payments/webhook.ts`）必须做到三点：
+
+**① 验签。** 端点是公开 URL，任何人都能 POST。用对方的签名密钥验证请求确实来自支付商、且未被篡改；验签失败直接 400。注意验签需要**原始请求体**——框架若先把 body 解析成 JSON 再给你，签名就对不上了，这是接 webhook 最常见的第一个坑。
+
+**② 核对金额。** 确认订单前，把回调里的金额与订单应付金额比对。不一致就拒绝确认并记录告警。签名保证「是对方发的」，不保证「这笔钱就是这张订单的钱」——把两个订单的回调张冠李戴，是能真实发生的集成 bug。
+
+**③ 幂等确认。** 支付商会重试 webhook，同一事件可能到两次、三次。确认动作因此写成带状态条件的原子更新：
+
+```sql
+-- 形态示意：只有 pending 的订单能被确认成 paid；重复通知更新 0 行，无副作用
+UPDATE orders SET status='paid', payment_intent_id=$2
+WHERE id=$1 AND status='pending'
 ```
 
-- 只处理关心的事件，其余一律回 200 表示收到——不回 200，Stripe 会不断重试，把你的日志打爆。
-- `completed` 还要再查 `payment_status === "paid"`：会话完成不等于钱到账（某些支付方式是异步确认的）。
-- `expired`（用户一直没付，会话过期）→ 取消订单并**退回预留库存**，同时让目录缓存失效。不处理这个事件，库存会被死订单永久占着。
+已 paid 的订单再收到同一通知，更新 0 行，直接返回 200 告诉对方「收到，别再重试」。**webhook 处理函数必须是可重入的**——这和第 11 章的幂等键是同一个思想：外部世界会重复，你的确认动作要经得起重复。
 
-幂等在服务层（`src/features/orders/service.ts`）：
+## 12.4 降级：没有密钥时走模拟支付
 
-```ts
-/** 标记已支付。幂等：只有 pending -> paid 会生效，webhook 重复投递也不会出问题。 */
-export async function markOrderPaid(orderId: string): Promise<boolean> {
-  const updated = await db.update(orders)
-    .set({ status: "paid", paidAt: new Date() })
-    .where(and(eq(orders.id, orderId), eq(orders.status, "pending")))
-    .returning({ id: orders.id });
-  return updated.length > 0;
-}
-```
-
-又见第 11 章的条件更新：`WHERE status = 'pending'` 让重复投递的 webhook 第二次更新 0 行、无副作用。Stripe 官方明确说 webhook 是**至少一次**投递、可能重复可能乱序——处理函数必须按「同一个事件会来 N 次」来写。取消退库存的 `cancelOrderAndRestock` 同理：先 `SELECT … FOR UPDATE` 锁订单行、确认状态在允许集合内，才改状态并逐项退库存（第 13 章还会见到它被后台复用）。
-
-## 12.3 模拟支付：两个项目的降级设计
-
-本地学习没有 Stripe 密钥怎么办？两家都做了模拟支付，但位置不同：
-
-- **A：可切换的降级路径**。`getStripe()` 没配密钥就返回 `null`，结账 action 据此把用户送到站内「模拟支付」页，点确认就调同一个 `markOrderPaid`。守卫很关键：`payMockOrder` 开头检查 `if (stripeConfigured()) throw`——**一旦配了真 Stripe，模拟支付自动禁用**，杜绝「生产上有人白嫖模拟支付」的后门。降级路径和正式路径汇入同一个幂等服务函数，行为一致。
-- **B：事务内模拟**。`captureMock` 只是一次 INSERT，且被环境开关锁死：
+`paymentsEnabled()` 为假时（本地开发、演示环境没配密钥），结账 action 把订单保持在 pending，跳到站内的模拟支付页；用户点「确认支付」后，页面直接调用与 webhook **完全相同的确认函数**：
 
 ```ts
-export async function captureMock(c: PoolClient, orderId: string, amount: number) {
-  if (process.env.DEMO_MODE !== 'true') throw new Error('Mock payment requires DEMO_MODE');
-  await c.query("INSERT INTO payments(order_id,amount,status) VALUES($1,$2,'captured')", [orderId, amount]);
-}
+/** 与 webhook 共用的确认函数（幂等）：pending → paid。 */
+export async function confirmOrderPaid(orderId: string): Promise<boolean> { /* … */ }
 ```
 
-B 的架构文档明确写了这只是教学简化：真实支付不能进数据库事务（第 11 章），生产化要改成 A 那种「待支付订单 + 事务外调用 + webhook 确认」的形状。**把两个项目的支付章连起来读，你看到的就是一条从教学实现通往生产实现的路。**
+这里的架构要点不是「能演示」，而是**确认逻辑只有一个实现**：真实回调和模拟路径殊途同归，测试模拟路径就等于测试了确认逻辑。降级路径若另写一套，就是两份迟早漂移的实现。
+
+## 12.5 失败与对账
+
+- 支付会话创建失败：订单留在 pending，用户可从订单页重新发起支付；超时未付的订单由后台任务关闭并归还库存（归还同样要幂等）。
+- 确认函数内部失败：返回 500 让支付商自动重试——这正是 webhook 可重入设计的原因。
+- 上线后要有对账意识：每天拿支付商的结算单与本地 paid 订单比对。集成代码再严谨，对账才是最后的网。
 
 ## 常见误区
 
-- **「用户跳回 success 页 = 支付成功」**：回跳是体验，webhook 是事实。订单状态只认后者。
-- **「webhook 处理里先查状态再更新就行」**：查与改之间有并发窗口；用带状态条件的原子更新（或锁行）才幂等。
-- **「验签失败偶尔出现很正常，忽略即可」**：验签失败要么是配置错（secret 不对、body 被中间层改过），要么是伪造请求。必须 400 拒绝并查原因，不能放行。
-- **「模拟支付留着没关系，反正没人知道」**：任何「假装成功」的入口在生产都是后门。要么用配置硬禁用（A、B 都做了），要么根本不带上生产构建。
+- **「用户跳回成功页就是支付成功」**：跳转不可信、不可靠。事实只认服务端回调。
+- **「webhook 收到一次处理一次，不用管重复」**：所有正经支付商都会重试。不可重入的 webhook 处理迟早重复确认、重复发货。
+- **「SDK 直接在业务代码里调最省事」**：省下的是当下的一层，欠下的是替换供应商时全仓手术的债。集成层隔离是全栈架构的基本功。
+- **「验签通过就等于一切正确」**：验签只证明来源。金额、订单号、币种都要逐一核对。
 
 ## 本章练习
 
-1. 本地用 Stripe CLI 把 webhook 转发到项目 A（README 有步骤），用测试卡 4242… 完成一单，观察订单从 pending 到 paid 的变化时机；再故意把 `STRIPE_WEBHOOK_SECRET` 改错，看结账与订单状态分别发生什么。
-2. 对同一张订单手动重放两次「模拟支付确认」，验证第二次没有副作用，并指出是哪一行代码保证的。
-3. 思考题：如果 webhook 和用户回跳同时到达，`markOrderPaid` 和 success 页的渲染会不会打架？为什么？
+1. 本地不配密钥走一遍模拟支付，然后对同一订单再手动调用一次确认函数，验证第二次调用无副作用（状态不变、无重复记录）。
+2. 用 curl 向 webhook 端点发一个假事件（不带合法签名），验证返回 400 且订单状态不变。
+3. 思考题：如果支付商的 webhook 永远没来（对方故障），订单和库存会停在什么状态？你会加什么兜底机制（提示：想想定时任务 + 主动查询支付状态）。

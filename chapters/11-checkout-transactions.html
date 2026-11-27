@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>第 11 章 结账事务与防超卖 · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<title>第 11 章 事务与并发控制 · Next.js 全栈最佳实践教程</title>
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -13,48 +13,47 @@
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="../index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
-<li><a href="../chapters/00-intro.html">导读：这本教程是什么</a></li>
-<li><a href="../chapters/01-architecture.html">第 1 章 架构总览：模块化单体与分层</a></li>
-<li><a href="../chapters/02-env-docker.html">第 2 章 环境配置与 Docker 编排</a></li>
-<li><a href="../chapters/03-database.html">第 3 章 数据库建模：Drizzle vs 手写 SQL</a></li>
-<li><a href="../chapters/04-money-pricing.html">第 4 章 金额与定价：领域规则要纯</a></li>
+<li><a href="../chapters/00-intro.html">导读：教程定位与参考实现</a></li>
+<li><a href="../chapters/01-architecture.html">第 1 章 全栈架构总览：分层与依赖方向</a></li>
+<li><a href="../chapters/02-env-docker.html">第 2 章 配置、环境与运行编排</a></li>
+<li><a href="../chapters/03-database.html">第 3 章 数据层设计：建模、约束与迁移</a></li>
+<li><a href="../chapters/04-domain.html">第 4 章 领域层：把业务规则写成纯函数</a></li>
 <li><a href="../chapters/05-data-access.html">第 5 章 数据访问层：查询、参数化与缓存</a></li>
-<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话：JWT vs 数据库会话</a></li>
+<li><a href="../chapters/06-auth-session.html">第 6 章 认证与会话</a></li>
 <li><a href="../chapters/07-access-control.html">第 7 章 访问控制：两道门与越权防护</a></li>
-<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与 Zod 校验</a></li>
-<li><a href="../chapters/09-catalog-pages.html">第 9 章 商品目录、服务端组件与 SEO</a></li>
-<li><a href="../chapters/10-cart.html">第 10 章 购物车：游客合并 vs 用户行锁</a></li>
-<li><a href="../chapters/11-checkout-transactions.html" class="active">第 11 章 结账事务与防超卖</a></li>
-<li><a href="../chapters/12-payments.html">第 12 章 支付：以回调为准</a></li>
-<li><a href="../chapters/13-orders-admin.html">第 13 章 订单状态机、审计与管理后台</a></li>
-<li><a href="../chapters/14-testing.html">第 14 章 测试策略：先测领域层</a></li>
-<li><a href="../chapters/15-deployment.html">第 15 章 部署：产物、迁移与上线清单</a></li>
-<li><a href="../chapters/16-comparison-exercises.html">第 16 章 对照总结与进阶路线</a></li>
+<li><a href="../chapters/08-forms-validation.html">第 8 章 表单、Server Actions 与校验</a></li>
+<li><a href="../chapters/09-rendering.html">第 9 章 页面渲染与数据获取</a></li>
+<li><a href="../chapters/10-cart.html">第 10 章 客户端状态与服务端状态：购物车</a></li>
+<li><a href="../chapters/11-checkout-transactions.html" class="active">第 11 章 事务与并发控制</a></li>
+<li><a href="../chapters/12-payments.html">第 12 章 与外部服务集成：支付与 Webhook</a></li>
+<li><a href="../chapters/13-orders-admin.html">第 13 章 业务流程编排：状态机、审计与事件</a></li>
+<li><a href="../chapters/14-testing.html">第 14 章 测试策略</a></li>
+<li><a href="../chapters/15-deployment.html">第 15 章 部署与运维</a></li>
+<li><a href="../chapters/16-checklist.html">第 16 章 全栈架构清单与进阶路线</a></li>
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
-<h1>第 11 章 结账事务与防超卖（全书核心）</h1>
+<h1>第 11 章 事务与并发控制（全书核心）</h1>
 <h2>本章目标</h2>
 <ul>
-<li>理解下单为什么必须是一个数据库事务，以及事务里到底放哪些步骤</li>
-<li>掌握防超卖的两种打法：条件 UPDATE（A）与行锁 FOR UPDATE（B）</li>
-<li>理解幂等键为什么能防住「重复下单」，以及 outbox 的位置</li>
+<li>理解关键写操作为什么必须是一个数据库事务，以及事务里到底放哪些步骤</li>
+<li>掌握防超卖的两种打法：条件 UPDATE 与行锁 FOR UPDATE</li>
+<li>理解幂等键为什么能防住重复提交，以及事务边界应该划在哪</li>
 </ul>
-<p>这一章是两个项目共同的重心。下单是电商系统里唯一「错了就要赔钱」的流程：超卖要退款道歉，重复扣款要被投诉，价格算错直接亏钱。两个项目用了不同的机制守同一批不变量，对照着读收获最大。</p>
+<p>这一章讲全栈开发里最贵的一课。下单是系统里「错了就要赔钱」的流程：超卖要退款道歉，重复下单要被投诉，金额算错直接亏损。所有机制都是为下面四条不变量服务的。</p>
 <h2>11.1 不变量先行</h2>
-<p>先把下单必须保证的事列清楚，机制都是为它们服务的：</p>
 <ol>
 <li><strong>不超卖</strong>：库存永远不能扣成负数，哪怕一百个请求同时抢最后一件。</li>
 <li><strong>不重复</strong>：用户双击、网络重试、浏览器刷新，不能生成两张订单、扣两次库存。</li>
 <li><strong>价格可信</strong>：金额按服务端数据库里的价格算（第 4 章）。</li>
 <li><strong>要么全成，要么全不成</strong>：扣了库存却没生成订单（或反过来）是最坏的中间态。</li>
 </ol>
-<h2>11.2 项目 A：条件 UPDATE —— 让数据库原子地判断</h2>
-<p>A 的结账 action 在一个事务里逐行扣库存（<code>src/features/checkout/actions.ts</code>）：</p>
+<h2>11.2 打法一：条件 UPDATE —— 让数据库原子地判断</h2>
+<p>参考实现的结账 action 在一个事务里逐行扣库存（<code>src/features/checkout/actions.ts</code>）：</p>
 <pre><code class="language-ts">orderId = await db.transaction(async (tx) =&gt; {
   // 1) 逐行原子扣库存：UPDATE ... WHERE stock &gt;= qty
   for (const line of cart.lines) {
@@ -74,67 +73,65 @@
   return order.id;
 });
 </code></pre>
-<p>精髓在 <code>WHERE stock &gt;= qty</code> 这一句：<strong>判断和扣减是同一条 SQL</strong>。两个并发事务同时抢最后 1 件：数据库逐个执行这条 UPDATE，第一个把库存扣到 0，第二个执行时 <code>stock &gt;= 1</code> 不成立、更新 0 行，代码检查到 <code>updated.length === 0</code> 就抛错回滚。不需要先 SELECT 再判断——「先查后改」之间永远有竞态窗口，条件更新把窗口关死了。</p>
+<p>精髓在 <code>WHERE stock &gt;= qty</code>：<strong>判断和扣减是同一条 SQL</strong>。两个并发事务同时抢最后 1 件：数据库逐个执行这条 UPDATE，第一个把库存扣到 0，第二个执行时条件不成立、更新 0 行，代码检查到 <code>updated.length === 0</code> 就抛错回滚。不需要先 SELECT 再判断——「先查后改」之间永远有竞态窗口，条件更新把窗口关死了。</p>
 <p>任何一行失败 → 抛异常 → 整个事务回滚：已扣的其他商品库存自动还原，订单不会生成，购物车原样保留。用户收到「『某商品』库存不足，请返回购物车调整」。这就是不变量 4 的落地方式：<strong>失败处理不是写一堆补偿代码，而是让事务回滚</strong>。</p>
-<h2>11.3 项目 B：行锁 —— 把并发排成队</h2>
-<p>B 的下单是一个独立的 workflow（<code>src/workflows/place-order.ts</code>），打法是先上锁、再安心地查和改：</p>
+<h2>11.3 打法二：行锁 —— 把并发排成队</h2>
+<p>另一种同样正确的打法是先上锁、再安心地查和改，适合逻辑更复杂的流程（如需要按顺序处理多行、还要查幂等键）：</p>
 <pre><code class="language-ts">return transaction(async (c) =&gt; {
-  // 锁顾客行：同一顾客的购物车操作与结账串行化
+  // 锁顾客行：同一顾客的相关操作串行化
   await c.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [userId]);
 
-  // 幂等：同请求键已有订单 → 直接返回那张订单
-  const prior = (await c.query('SELECT id FROM orders WHERE user_id=$1 AND request_key=$2',
-    [userId, input.key])).rows[0];
+  // 幂等：同请求键已有订单 → 直接返回那张订单（见 11.4）
+  const prior = /* 按 (user_id, request_key) 查已有订单 */;
   if (prior) return prior.id;
 
   // 按商品 ID 顺序锁定全部涉及的库存行
   const { rows } = await c.query(
-    'SELECT p.id,p.name,p.price,p.stock,p.active,ci.quantity FROM cart_items ci JOIN products p ON p.id=ci.product_id WHERE ci.user_id=$1 ORDER BY p.id FOR UPDATE OF p',
+    'SELECT … FROM cart_items ci JOIN products p ON p.id=ci.product_id WHERE ci.user_id=$1 ORDER BY p.id FOR UPDATE OF p',
     [userId]);
-  if (!rows.length) throw new Error('EMPTY_CART');
   for (const r of rows)
     if (!r.active || r.stock &lt; r.quantity) throw new Error('INSUFFICIENT_STOCK');
-
-  const t = totals(/* 服务端价格算小计 */, input.code);
-  // 建订单（状态直接 paid，因为模拟支付在事务内）→ 写快照 → 扣库存
-  // → 记录支付 → 清购物车 → 写 outbox → COMMIT
+  // 查到的数据在事务结束前不会被别人改，可以直白地检查、计算、写入…
 });
 </code></pre>
-<p>三个细节值得放大看：</p>
+<p>三个细节：</p>
 <ol>
-<li><strong><code>ORDER BY p.id</code> 再加锁</strong>：多个订单锁同一批商品行时，如果加锁顺序不一致，会互相等成死锁。统一按 id 升序加锁，所有事务以相同顺序拿锁，死锁在结构上被避免。这是行锁打法的必备纪律。</li>
-<li><strong>锁内可以放心地「先查后改」</strong>：A 要用条件 UPDATE 是因为它没锁；B 锁住了行，查到的 stock 在事务结束前不会被别人改，所以直白的检查反而更易读。两种打法没有高下，看你更信任哪套心智模型。</li>
-<li><strong>幂等键 + 唯一约束双保险</strong>：结账表单里带一个 UUID <code>key</code>（每次打开结账页生成）。重复提交时，workflow 先按 <code>(user_id, request_key)</code> 查到已有订单直接返回；万一两个请求并发穿过检查，第 3 章那条 <code>UNIQUE(user_id, request_key)</code> 约束会让第二个插入失败。应用检查负责体验，数据库约束负责正确性——和第 3 章是同一课。</li>
+<li><strong><code>ORDER BY id</code> 再加锁</strong>：多个事务锁同一批行时，加锁顺序不一致会互相等成死锁。统一按 id 升序加锁，所有事务以相同顺序拿锁，死锁在结构上被避免。这是行锁打法的必备纪律。</li>
+<li><strong>锁内可以放心地「先查后改」</strong>：锁住了行，查到的 stock 在事务结束前不会变，直白的检查反而更易读。行锁与条件更新没有高下之分：无锁的条件更新更轻、适合单点扣减；行锁适合需要在锁内做多步判断的复杂流程。</li>
+<li><strong>锁的粒度决定吞吐</strong>：锁用户行只串行化同一个用户，互不影响；锁商品行串行化同一商品的所有买家。按业务的真实竞争点选粒度，别动不动锁全表。</li>
 </ol>
-<h2>11.4 事务的边界：什么不该放进来</h2>
-<p>对比两家的事务范围，能看出一个共同判断：<strong>慢的、外部的、不可回滚的操作不进事务</strong>。</p>
+<h2>11.4 幂等：防住重复提交</h2>
+<p>不变量 2 的标准解法是<strong>幂等键</strong>：</p>
 <ul>
-<li>B 的模拟支付只是一次本地 INSERT，可以进事务；它的架构文档专门写明：真实支付<strong>不可</strong>放进这个事务——要改成「事务内建待支付订单 + 预留库存 → 事务外调支付商 → webhook 幂等确认」。</li>
-<li>A 正是这么做的：事务只管扣库存、建 <code>pending</code> 订单、清购物车；调 Stripe 创建结账会话在事务<strong>提交之后</strong>。若 Stripe 调用失败，它的补偿是调用 <code>cancelOrderAndRestock</code> 取消订单退库存（一个显式的逆操作），而不是假装能回滚一件已经发生的事。</li>
+<li>打开结账页时生成一个 UUID 作为本次结账的请求键，随表单一起提交；</li>
+<li>订单表给 <code>(user_id, request_key)</code> 加唯一约束（第 3 章）；</li>
+<li>下单事务先按请求键查：已有订单就直接返回它（双击、重试、刷新都得到同一个结果）；万一两个请求并发穿过检查，唯一约束会让第二个插入失败，捕获后同样返回已有订单。</li>
 </ul>
-<p>记住这个划分：<strong>数据库事务只能回滚数据库里的东西</strong>。凡是出了这个进程边界（支付、邮件、第三方 API），都要用「状态机 + 幂等 + 补偿动作」来处理，不能指望回滚。</p>
-<h2>11.5 outbox：事件和数据一起落地</h2>
-<p>B 在下单事务的最后写了一行 outbox：</p>
-<pre><code class="language-ts">await c.query('INSERT INTO outbox(topic,payload) VALUES($1,$2)',
-  ['order.paid', JSON.stringify({ orderId: order.id })]);
-</code></pre>
-<p>要解决的问题是：订单提交成功了，但「发通知邮件/推送给仓库」这一步崩了，怎么办？把事件和业务数据写进<strong>同一个事务</strong>，两者同生共死；之后由一个后台投递器慢慢把 outbox 里的事件发出去（B 只记录未实现投递，并在 README 里明说了）。这是分布式系统里「事务性发件箱」的标准模式，在单体里同样成立。第 13 章的状态变更工作流也用了同样的手法。</p>
+<p>分工和第 3 章是同一课：<strong>应用检查负责体验（快速返回），数据库约束负责正确性（最终防线）</strong>。第 8 章的按钮禁用只是第一层辅助，真正的幂等必须落在服务端。参考实现的支付确认（webhook）用了同一思想的另一形态：带状态条件的原子更新（第 12 章）。</p>
+<h2>11.5 事务的边界：什么不该放进来</h2>
+<p><strong>慢的、外部的、不可回滚的操作不进事务</strong>。</p>
+<ul>
+<li>参考实现的事务只管扣库存、建 <code>pending</code> 订单、清购物车；调支付商创建结账会话在事务<strong>提交之后</strong>。若支付调用失败，补偿是调用一个显式的逆操作（取消订单并退库存，第 13 章），而不是假装能回滚一件已经发生的事。</li>
+<li>同理，发邮件、调第三方 API、写对象存储都不进事务。它们要靠「状态机 + 幂等 + 补偿动作」处理（第 12、13 章）。</li>
+<li>事务持有期间，行锁一直占着。事务里多一步慢操作，后面排队的请求就多堵一会儿。事务要短、只包数据库操作。</li>
+</ul>
+<p>记住这个划分：<strong>数据库事务只能回滚数据库里的东西</strong>。出了这个进程边界，就要用工程手段对齐，而不是指望回滚。</p>
 <h2>常见误区</h2>
 <ul>
 <li><strong>「先 SELECT 库存够不够，再 UPDATE 扣减」</strong>：两步之间就是竞态窗口，并发下必超卖。要么条件更新，要么先锁行——不存在第三种靠运气的写法。</li>
-<li><strong>「防重复提交靠前端禁用按钮」</strong>：刷新、重试、双标签页、直接重放请求都绕得过前端。幂等键 + 唯一约束才是服务端级别的答案（第 8 章的按钮禁用只是第一层辅助）。</li>
-<li><strong>「事务越大越安全，把支付也包进来」</strong>：事务持有期间行锁一直占着，外部 API 一慢，锁就堵成串。事务要短、只包数据库操作。</li>
+<li><strong>「防重复提交靠前端禁用按钮」</strong>：刷新、重试、双标签页、直接重放请求都绕得过前端。幂等键 + 唯一约束才是服务端级别的答案。</li>
+<li><strong>「事务越大越安全，把支付也包进来」</strong>：外部 API 一慢，锁就堵成串，而且外部调用根本回滚不了。事务的边界就是数据库的边界。</li>
 <li><strong>「回滚能撤销一切」</strong>：回滚只对本事务的数据库修改有效。已经发出的请求、已经扣的款，要靠补偿流程。</li>
 </ul>
 <h2>本章练习</h2>
 <ol>
-<li>并发实测：把项目 B 某商品库存改成 1，用两个浏览器（或两个 curl）同时结账，验证只有一单成功、库存为 0、没有负数。</li>
-<li>给项目 A 的下单也加幂等：为结账表单生成请求键、订单表加唯一约束、action 里处理冲突。说说与 B 的实现差在哪。</li>
-<li>把 B 的 <code>ORDER BY p.id</code> 去掉，构造两个订单交叉锁定同样两个商品的场景，观察是否出现死锁报错（PostgreSQL 会主动检测并掐掉一个事务）。改完还原。</li>
-<li>思考题：A 的条件 UPDATE 打法如果要一次扣 20 行，其中第 19 行失败，前 18 行的扣减靠什么还原？</li>
+<li>并发实测：把某商品库存改成 1，用两个浏览器（或脚本）同时结账，验证只有一单成功、库存为 0、没有负数。</li>
+<li>给参考实现的下单加上 11.4 的幂等键：结账页生成请求键、订单表加列与唯一约束、action 处理重复提交。完成后连点两次提交，验证只有一张订单。</li>
+<li>构造死锁：写一个测试事务，故意以相反顺序锁两个商品行，与正常下单并发跑，观察 PostgreSQL 如何检测并掐掉一个事务。</li>
+<li>思考题：条件 UPDATE 打法一次扣 20 行，第 19 行失败时，前 18 行的扣减靠什么还原？</li>
 </ol>
-<div class="prevnext"><span><a href="10-cart.html">← 第 10 章 购物车：游客合并 vs 用户行锁</a></span><span class="next"><a href="12-payments.html">第 12 章 支付：以回调为准 →</a></span></div>
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<div class="prevnext"><span><a href="10-cart.html">← 第 10 章 客户端状态与服务端状态：购物车</a></span><span class="next"><a href="12-payments.html">第 12 章 与外部服务集成：支付与 Webhook →</a></span></div>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>

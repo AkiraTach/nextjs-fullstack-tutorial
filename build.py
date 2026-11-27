@@ -11,23 +11,23 @@ BOOK = ROOT / "book"
 OUT = ROOT / "site"
 
 CHAPTERS = [
-    ("00-intro", "导读：这本教程是什么"),
-    ("01-architecture", "第 1 章 架构总览：模块化单体与分层"),
-    ("02-env-docker", "第 2 章 环境配置与 Docker 编排"),
-    ("03-database", "第 3 章 数据库建模：Drizzle vs 手写 SQL"),
-    ("04-money-pricing", "第 4 章 金额与定价：领域规则要纯"),
+    ("00-intro", "导读：教程定位与参考实现"),
+    ("01-architecture", "第 1 章 全栈架构总览：分层与依赖方向"),
+    ("02-env-docker", "第 2 章 配置、环境与运行编排"),
+    ("03-database", "第 3 章 数据层设计：建模、约束与迁移"),
+    ("04-domain", "第 4 章 领域层：把业务规则写成纯函数"),
     ("05-data-access", "第 5 章 数据访问层：查询、参数化与缓存"),
-    ("06-auth-session", "第 6 章 认证与会话：JWT vs 数据库会话"),
+    ("06-auth-session", "第 6 章 认证与会话"),
     ("07-access-control", "第 7 章 访问控制：两道门与越权防护"),
-    ("08-forms-validation", "第 8 章 表单、Server Actions 与 Zod 校验"),
-    ("09-catalog-pages", "第 9 章 商品目录、服务端组件与 SEO"),
-    ("10-cart", "第 10 章 购物车：游客合并 vs 用户行锁"),
-    ("11-checkout-transactions", "第 11 章 结账事务与防超卖"),
-    ("12-payments", "第 12 章 支付：以回调为准"),
-    ("13-orders-admin", "第 13 章 订单状态机、审计与管理后台"),
-    ("14-testing", "第 14 章 测试策略：先测领域层"),
-    ("15-deployment", "第 15 章 部署：产物、迁移与上线清单"),
-    ("16-comparison-exercises", "第 16 章 对照总结与进阶路线"),
+    ("08-forms-validation", "第 8 章 表单、Server Actions 与校验"),
+    ("09-rendering", "第 9 章 页面渲染与数据获取"),
+    ("10-cart", "第 10 章 客户端状态与服务端状态：购物车"),
+    ("11-checkout-transactions", "第 11 章 事务与并发控制"),
+    ("12-payments", "第 12 章 与外部服务集成：支付与 Webhook"),
+    ("13-orders-admin", "第 13 章 业务流程编排：状态机、审计与事件"),
+    ("14-testing", "第 14 章 测试策略"),
+    ("15-deployment", "第 15 章 部署与运维"),
+    ("16-checklist", "第 16 章 全栈架构清单与进阶路线"),
 ]
 
 CSS = """
@@ -77,7 +77,7 @@ TEMPLATE = """<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title} · Next.js 全栈最佳实践教程</title>
-<meta name="description" content="用两个完整的 Next.js 电商项目对照学习全栈开发最佳实践：架构、数据库、认证、购物车、结账事务、支付、状态机、测试与部署。">
+<meta name="description" content="Next.js 全栈架构最佳实践教程：分层、配置、数据建模、领域规则、认证、访问控制、事务与并发、外部服务集成、流程编排、测试与部署。">
 <link rel="stylesheet" href="{root}assets/style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
@@ -86,17 +86,17 @@ TEMPLATE = """<!DOCTYPE html>
 <div class="layout">
 <nav class="sidebar" id="sidebar">
 <p class="site-title"><a href="{root}index.html" style="color:inherit">Next.js 全栈最佳实践教程</a></p>
-<p class="site-sub">两个电商项目对照学：NextShop（Drizzle / JWT / Stripe）× Field Shop（手写 SQL / 会话表 / 状态机）</p>
+<p class="site-sub">以一个完整的 Next.js 16 + PostgreSQL 参考实现，系统讲全栈架构：分层 · 数据 · 认证 · 事务 · 集成 · 测试 · 部署</p>
 <ol>
 {nav}
 </ol>
-<p class="site-sub" style="margin-top:18px">源码在仓库 <code>projects/</code> 目录，可与教程对照阅读。</p>
+<p class="site-sub" style="margin-top:18px">参考实现源码在仓库 <code>project/</code> 目录，可与教程对照阅读。</p>
 </nav>
 <main>
 <button class="menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰ 目录</button>
 {body}
 {prevnext}
-<footer>Next.js 全栈最佳实践教程 · 基于 NextShop 与 Field Shop 两个学习项目编写 · 代码以仓库 projects/ 目录为准</footer>
+<footer>Next.js 全栈最佳实践教程 · 代码以仓库 project/ 目录的参考实现为准</footer>
 </main>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -107,21 +107,23 @@ TEMPLATE = """<!DOCTYPE html>
 
 HOME_BODY = """
 <h1>Next.js 全栈最佳实践教程</h1>
-<p>用<strong>两个完整的 Next.js 电商项目</strong>学全栈开发：它们实现同一个网店，却走了不同的技术路线——一个用 Drizzle ORM + JWT + Stripe，一个用手写 SQL + 数据库会话 + 订单状态机。对照着读，你学到的不是 API，而是每个决策背后的取舍。</p>
-<p>从<a href="chapters/00-intro.html">导读</a>开始：先把两个项目用 Docker 跑起来，各走一遍购物流程，再按章读代码。每章都有关键代码节选、两套实现对照、常见误区和动手练习。</p>
+<p>这是一本讲<strong>全栈架构</strong>的教程：怎么分层、配置怎么管、数据怎么建模、认证怎么做、并发怎么控、外部服务怎么接、怎么测、怎么部署——这些决定一个项目能不能长期维护的问题。</p>
+<p>教程贯穿一个完整的参考实现（Next.js 16 + PostgreSQL 17：前台浏览、账号、购物车、结账支付、订单、运营后台），源码在仓库 <code>project/</code> 目录。商城只是载体，每章讲的方法都可迁移到任何全栈项目。</p>
+<p>从<a href="chapters/00-intro.html">导读</a>开始：先把参考实现用 Docker 跑起来走一遍流程，再按章读代码。每章都有关键代码节选、设计理由、常见误区和动手练习。</p>
 <h2>章节</h2>
 <div class="cards">
 {cards}
 </div>
-<h2>两个项目</h2>
+<h2>参考实现</h2>
 <table>
-<tr><th></th><th>项目 A：NextShop</th><th>项目 B：Field Shop</th></tr>
-<tr><td>源码</td><td><code>projects/nextjs-shop/</code></td><td><code>projects/ecommerce-learning/</code></td></tr>
-<tr><td>版本</td><td>Next.js 16 · PostgreSQL 17</td><td>Next.js 15 · PostgreSQL 16</td></tr>
-<tr><td>数据访问</td><td>Drizzle ORM</td><td>手写 SQL（pg）</td></tr>
-<tr><td>会话</td><td>JWT（jose）</td><td>不透明令牌 + 会话表</td></tr>
-<tr><td>支付</td><td>Stripe + Webhook（可模拟）</td><td>模拟支付</td></tr>
-<tr><td>特色</td><td>缓存失效、SEO、游客购物车合并</td><td>领域层、状态机、审计、outbox、幂等键</td></tr>
+<tr><th>维度</th><th>选型</th></tr>
+<tr><td>框架</td><td>Next.js 16（App Router）· React 19 · TypeScript</td></tr>
+<tr><td>数据库</td><td>PostgreSQL 17 · Drizzle ORM（schema 即类型 + 迁移链）</td></tr>
+<tr><td>认证</td><td>JWT 会话（jose）· bcrypt 密码哈希 · proxy + 守卫两道门</td></tr>
+<tr><td>校验</td><td>Zod（校验规则与类型同源）· Server Actions + useActionState</td></tr>
+<tr><td>支付集成</td><td>Stripe Checkout + Webhook（无密钥时自动降级模拟支付）</td></tr>
+<tr><td>正确性</td><td>条件 UPDATE 防超卖 · 幂等确认 · 状态机 + 审计 + outbox</td></tr>
+<tr><td>测试 / 部署</td><td>Vitest（领域层优先）· Docker 多阶段构建 + compose 编排</td></tr>
 </table>
 """
 
