@@ -1,0 +1,6 @@
+title: Next.js 全栈开发最佳实践
+description: 从项目架构到工程化部署
+theme: jekyll-theme-minimal
+lang: zh-CN
+markdown: kramdown
+exclude: [README.md]
